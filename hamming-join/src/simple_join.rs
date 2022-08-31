@@ -1,11 +1,14 @@
 use crate::sketch::Sketch;
 
-pub struct SimpleJoiner {
-    sketches: Vec<Vec<u64>>,
+pub struct SimpleJoiner<S> {
+    sketches: Vec<Vec<S>>,
     num_chunks: usize,
 }
 
-impl SimpleJoiner {
+impl<S> SimpleJoiner<S>
+where
+    S: Sketch,
+{
     pub fn new(num_chunks: usize) -> Self {
         Self {
             sketches: vec![],
@@ -15,7 +18,7 @@ impl SimpleJoiner {
 
     pub fn add<I>(&mut self, sketch: I)
     where
-        I: IntoIterator<Item = u64>,
+        I: IntoIterator<Item = S>,
     {
         let mut iter = sketch.into_iter();
         let mut sketch = Vec::with_capacity(self.num_chunks());
@@ -26,7 +29,7 @@ impl SimpleJoiner {
     }
 
     pub fn similar_pairs(&self, radius: f64) -> Vec<(usize, usize, f64)> {
-        let dimension = 64 * self.num_chunks();
+        let dimension = S::dim() * self.num_chunks();
         let hamdist = (dimension as f64 * radius).ceil() as usize;
         println!("dimension={dimension}, hamdist={hamdist}");
 

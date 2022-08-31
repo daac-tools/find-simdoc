@@ -4,10 +4,7 @@ use crate::bitset64::Bitset64;
 use crate::sketch::Sketch;
 
 #[derive(Clone, Debug)]
-struct Record<S>
-where
-    S: Sketch,
-{
+struct Record<S> {
     id: usize,
     sketch: S,
 }

@@ -1,11 +1,14 @@
 use crate::multi_sort::MultiSort;
 use crate::sketch::Sketch;
 
-pub struct ChunkedJoiner {
-    chunks: Vec<Vec<u64>>,
+pub struct ChunkedJoiner<S> {
+    chunks: Vec<Vec<S>>,
 }
 
-impl ChunkedJoiner {
+impl<S> ChunkedJoiner<S>
+where
+    S: Sketch,
+{
     pub fn new(num_chunks: usize) -> Self {
         Self {
             chunks: vec![vec![]; num_chunks],
@@ -14,7 +17,7 @@ impl ChunkedJoiner {
 
     pub fn add<I>(&mut self, sketch: I)
     where
-        I: IntoIterator<Item = u64>,
+        I: IntoIterator<Item = S>,
     {
         let mut iter = sketch.into_iter();
         self.chunks
@@ -23,7 +26,7 @@ impl ChunkedJoiner {
     }
 
     pub fn similar_pairs(&self, radius: f64) -> Vec<(usize, usize, f64)> {
-        let dimension = 64 * self.num_chunks();
+        let dimension = S::dim() * self.num_chunks();
         let hamdist = (dimension as f64 * radius).ceil() as usize;
         println!("dimension={dimension}, hamdist={hamdist}");
 
