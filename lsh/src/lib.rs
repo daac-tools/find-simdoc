@@ -1,3 +1,4 @@
+pub mod minhash;
 pub mod simhash;
 
 #[inline(always)]
