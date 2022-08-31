@@ -1,5 +1,10 @@
 use rand_xoshiro::rand_core::{RngCore, SeedableRng};
 
+/// 1-bit minwise hashing for Jaccard similarity.
+///
+/// # Reference
+///
+/// * https://arxiv.org/abs/0910.3349
 pub struct MinHasher {
     seed: u64,
 }
