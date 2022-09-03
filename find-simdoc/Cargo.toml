@@ -12,3 +12,7 @@ lsh = { path = "../lsh" }  # MIT or Apache-2.0
 clap = { version = "~3.2.1", features = ["derive"] }  # MIT or Apache-2.0
 fasthash = "0.4.0"
 hashbrown = "0.12.3"
+
+[[bin]]
+name = "jac"
+path = "src/bin/jac.rs"
