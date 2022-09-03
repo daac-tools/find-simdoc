@@ -63,16 +63,19 @@ fn main() {
     let texts = load_lines(text_path);
     println!("#texts = {}", texts.len());
 
-    let feature_config = FeatureConfig::new(window_size, delimiter, 53);
-    let results = find_in_jaccard(texts.iter().clone(), radius, num_chunks, feature_config);
+    let config = FeatureConfig::new(window_size, delimiter, 53);
+    let results = find_in_jaccard(texts.iter().clone(), radius, num_chunks, config);
 
-    let mut extractor = FeatureExtractor::new(feature_config);
+    let mut extractor = FeatureExtractor::new(config);
+
+    let mut fi = vec![];
+    let mut fj = vec![];
     for (i, j, d) in results {
         let ti = &texts[i];
         let tj = &texts[j];
-        let fi = extractor.extract(ti).to_vec();
-        let fj = extractor.extract(tj).to_vec();
-        let actual = lsh::jaccard_distance(fi, fj);
+        extractor.extract(ti, &mut fi);
+        extractor.extract(tj, &mut fj);
+        let actual = lsh::jaccard_distance(&fi, &fj);
         println!("[i={i},j={j},dist={d},act={actual}]");
         println!("{}", texts[i]);
         println!("{}", texts[j]);
@@ -83,19 +86,20 @@ fn find_in_jaccard<I, S>(
     texts: I,
     radius: f64,
     num_chunks: usize,
-    feature_config: FeatureConfig,
+    config: FeatureConfig,
 ) -> Vec<(usize, usize, f64)>
 where
     I: Iterator<Item = S>,
     S: AsRef<str>,
 {
-    let mut extractor = FeatureExtractor::new(feature_config);
+    let hasher = MinHasher::new(42);
+    let mut extractor = FeatureExtractor::new(config);
     let mut joiner = SimpleJoiner::<u64>::new(num_chunks);
 
-    let hasher = MinHasher::new(42);
+    let mut features = vec![];
     for text in texts {
-        let features = extractor.extract(text.as_ref());
-        joiner.add(hasher.iter(features));
+        extractor.extract(text.as_ref(), &mut features);
+        joiner.add(hasher.iter(&features));
     }
 
     // In 1-bit minhash, the collision probability is multiplied by 2 over the original.
