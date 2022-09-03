@@ -5,7 +5,7 @@ use std::path::PathBuf;
 
 use clap::Parser;
 use find_simdoc::feature::{FeatureConfig, FeatureExtractor};
-use hamming_join::simple_join::SimpleJoiner;
+use hamming_join::chunked_join::ChunkedJoiner;
 use lsh::simhash::SimHasher;
 use rand::{RngCore, SeedableRng};
 
@@ -74,7 +74,7 @@ where
 {
     let hasher = SimHasher::new(seed);
     let mut extractor = FeatureExtractor::new(config);
-    let mut joiner = SimpleJoiner::<u64>::new(num_chunks);
+    let mut joiner = ChunkedJoiner::<u64>::new(num_chunks);
 
     let mut features = vec![];
     for text in texts {
