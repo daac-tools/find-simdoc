@@ -1,19 +1,19 @@
 use std::time::Instant;
 
-use rand::{thread_rng, Rng};
+use rand::{distributions::Distribution, thread_rng, Rng};
 
 use hamming_join::chunked_join::ChunkedJoiner;
 use hamming_join::simple_join::SimpleJoiner;
 
 const TRIALS: usize = 1;
 const MIN_SKETCHES: usize = 1_000;
-const MAX_SKETCHES: usize = 1_000_000;
+const MAX_SKETCHES: usize = 100_000;
 const MIN_CHUNKS: usize = 1;
 const MAX_CHUNKS: usize = 4;
 const RADII: [f64; 4] = [0.01, 0.02, 0.05, 0.1];
 
 macro_rules! timeperf_common {
-    ($name:expr, $method:ident, $sketches:ident, $radii:ident) => {
+    ($distribution:expr, $name:expr, $method:ident, $sketches:ident, $radii:ident) => {
         let mut num_chunks = MIN_CHUNKS;
         while num_chunks <= MAX_CHUNKS {
             let mut joiner = $method::new(num_chunks);
@@ -24,14 +24,14 @@ macro_rules! timeperf_common {
                     joiner.add(sketch.iter().cloned());
                 }
                 for &radius in $radii {
+                    let mut num_results = 0;
                     let elapsed_sec = measure(TRIALS, || {
-                        if joiner.similar_pairs(radius).len() == usize::MAX {
-                            panic!();
-                        }
+                        num_results += joiner.similar_pairs(radius).len();
                     });
+                    num_results /= TRIALS;
                     println!(
-                        "[method={},num_chunks={num_chunks},num_sketches={num_sketches},radius={radius}] {elapsed_sec} sec",
-                        $name
+                        "[distribution={},method={},num_chunks={num_chunks},num_sketches={num_sketches},radius={radius},num_results={num_results}] {elapsed_sec} sec",
+                        $distribution, $name
                     );
                 }
                 num_sketches *= 10;
@@ -42,6 +42,11 @@ macro_rules! timeperf_common {
 }
 
 fn main() {
+    main_uniform();
+    main_zipf();
+}
+
+fn main_uniform() {
     let mut rng = thread_rng();
     let mut sketches = Vec::with_capacity(MAX_SKETCHES);
     for _ in 0..MAX_SKETCHES {
@@ -53,11 +58,36 @@ fn main() {
     }
     {
         let radii = &RADII[..1];
-        timeperf_common!("simple_join", SimpleJoiner, sketches, radii);
+        timeperf_common!("uniform", "simple_join", SimpleJoiner, sketches, radii);
     }
     {
         let radii = &RADII[..];
-        timeperf_common!("chunked_join", ChunkedJoiner, sketches, radii);
+        timeperf_common!("uniform", "chunked_join", ChunkedJoiner, sketches, radii);
+    }
+}
+
+fn main_zipf() {
+    // Generate 1 or 2
+    let zipf = zipf::ZipfDistribution::new(2, 1.).unwrap();
+
+    let mut rng = thread_rng();
+    let mut sketches = Vec::with_capacity(MAX_SKETCHES);
+    for _ in 0..MAX_SKETCHES {
+        let mut chunks = Vec::with_capacity(MAX_CHUNKS);
+        for _ in 0..MAX_CHUNKS {
+            chunks.push((0..64).fold(0u64, |acc, _| {
+                (acc << 1) | (zipf.sample(&mut rng) as u64 - 1)
+            }));
+        }
+        sketches.push(chunks);
+    }
+    {
+        let radii = &RADII[..1];
+        timeperf_common!("zipfian", "simple_join", SimpleJoiner, sketches, radii);
+    }
+    {
+        let radii = &RADII[..];
+        timeperf_common!("zipfian", "chunked_join", ChunkedJoiner, sketches, radii);
     }
 }
 
