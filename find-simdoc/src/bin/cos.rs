@@ -13,19 +13,19 @@ use lsh::simhash::SimHasher;
     about = "A program to find similar documents in the Cosine space."
 )]
 struct Args {
-    #[clap(short = 'i', long, action)]
+    #[clap(short = 'i', long)]
     text_path: PathBuf,
 
-    #[clap(short = 'r', long, action)]
+    #[clap(short = 'r', long)]
     radius: f64,
 
-    #[clap(short = 'd', long, action)]
+    #[clap(short = 'd', long)]
     delimiter: Option<char>,
 
-    #[clap(short = 'w', long, action)]
+    #[clap(short = 'w', long)]
     window_size: usize,
 
-    #[clap(short = 'c', long, action, default_value = "64")]
+    #[clap(short = 'c', long, default_value = "64")]
     num_chunks: usize,
 }
 
@@ -43,6 +43,7 @@ fn main() {
 
     let config = FeatureConfig::new(window_size, delimiter, 53);
     let results = find_in_cosine(texts.iter().clone(), radius, num_chunks, config);
+    println!("#results = {}", results.len());
 
     for (i, j, d) in results {
         println!("[i={i},j={j},dist={d}]");

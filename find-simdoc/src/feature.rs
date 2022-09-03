@@ -2,7 +2,6 @@ use std::hash::{Hash, Hasher};
 use std::ops::Range;
 
 use fasthash::{CityHasher, FastHasher};
-use hashbrown::HashMap;
 
 use crate::shingling::ShingleIter;
 
@@ -38,7 +37,6 @@ impl FeatureConfig {
 
 pub struct FeatureExtractor {
     config: FeatureConfig,
-    weights: Option<HashMap<u64, f64>>, // TODO: Use sketch counting
     token_ranges: Vec<Range<usize>>,
 }
 
@@ -46,36 +44,8 @@ impl FeatureExtractor {
     pub const fn new(config: FeatureConfig) -> Self {
         Self {
             config,
-            weights: None,
             token_ranges: vec![],
         }
-    }
-
-    pub fn build_tf<I, S>(&mut self, texts: I)
-    where
-        I: IntoIterator<Item = S>,
-        S: AsRef<str>,
-    {
-        let mut features = vec![];
-        let mut weights = HashMap::new();
-
-        let mut sum = 0;
-        for text in texts {
-            self.extract(text, &mut features);
-            for &f in &features {
-                weights
-                    .entry(f)
-                    .and_modify(|counter| *counter += 1.)
-                    .or_insert(1.);
-            }
-            sum += features.len();
-        }
-
-        let sum = sum as f64;
-        for (_, w) in weights.iter_mut() {
-            *w /= sum;
-        }
-        self.weights = Some(weights);
     }
 
     pub fn extract<S>(&mut self, text: S, features: &mut Vec<u64>)
@@ -105,26 +75,16 @@ impl FeatureExtractor {
         features.clear();
         if self.config.delimiter.is_none() && self.config.window_size == 1 {
             // The simplest case.
-            let weights = self.weights.as_ref();
             text.chars().for_each(|c| {
                 let f = c as u64;
-                let w = if let Some(weights) = weights {
-                    *weights.get(&f).unwrap_or(&1.)
-                } else {
-                    1.
-                };
+                let w = 1.;
                 features.push((f, w))
             });
         } else {
             self.tokenize(text);
-            let weights = self.weights.as_ref();
             for ranges in ShingleIter::new(&self.token_ranges, self.config.window_size) {
                 let f = self.config.hash(ranges.iter().cloned().map(|r| &text[r]));
-                let w = if let Some(weights) = weights {
-                    *weights.get(&f).unwrap_or(&1.)
-                } else {
-                    1.
-                };
+                let w = 1.;
                 features.push((f, w))
             }
         }
@@ -252,123 +212,5 @@ mod tests {
 
         extractor.extract(text, &mut features);
         assert_eq!(features, vec![config.hash(&["abc", "de", "fgh"])])
-    }
-
-    #[test]
-    fn test_char_unigram_tf() {
-        let config = FeatureConfig::new(1, None, 42);
-        let mut extractor = FeatureExtractor::new(config);
-
-        let text = "abcd";
-        let mut features = vec![];
-
-        extractor.build_tf(["ab", "ac"]);
-        extractor.extract_with_weights(text, &mut features);
-
-        assert_eq!(
-            features,
-            vec![
-                ('a' as u64, 0.5),
-                ('b' as u64, 0.25),
-                ('c' as u64, 0.25),
-                ('d' as u64, 0.0)
-            ]
-        )
-    }
-
-    #[test]
-    fn test_char_bigram_tf() {
-        let config = FeatureConfig::new(2, None, 42);
-        let mut extractor = FeatureExtractor::new(config);
-
-        let text = "abcd";
-        let mut features = vec![];
-
-        extractor.build_tf(["abc", "aca"]);
-        extractor.extract_with_weights(text, &mut features);
-
-        assert_eq!(
-            features,
-            vec![
-                (config.hash(&["a", "b"]), 0.25),
-                (config.hash(&["b", "c"]), 0.25),
-                (config.hash(&["c", "d"]), 0.),
-            ]
-        )
-    }
-
-    #[test]
-    fn test_char_trigram_tf() {
-        let config = FeatureConfig::new(3, None, 42);
-        let mut extractor = FeatureExtractor::new(config);
-
-        let text = "abcd";
-        let mut features = vec![];
-
-        extractor.build_tf(["abcd", "aabc"]);
-        extractor.extract_with_weights(text, &mut features);
-
-        assert_eq!(
-            features,
-            vec![
-                (config.hash(&["a", "b", "c"]), 0.5),
-                (config.hash(&["b", "c", "d"]), 0.25),
-            ]
-        )
-    }
-
-    #[test]
-    fn test_word_unigram_tf() {
-        let config = FeatureConfig::new(1, Some(' '), 42);
-        let mut extractor = FeatureExtractor::new(config);
-
-        let text = "abc de fgh";
-        let mut features = vec![];
-
-        extractor.build_tf(["abc de fgh", "abc"]);
-        extractor.extract_with_weights(text, &mut features);
-
-        assert_eq!(
-            features,
-            vec![
-                (config.hash(&["abc"]), 0.5),
-                (config.hash(&["de"]), 0.25),
-                (config.hash(&["fgh"]), 0.25),
-            ]
-        )
-    }
-
-    #[test]
-    fn test_word_bigram_tf() {
-        let config = FeatureConfig::new(2, Some(' '), 42);
-        let mut extractor = FeatureExtractor::new(config);
-
-        let text = "abc de fgh";
-        let mut features = vec![];
-
-        extractor.build_tf(["abc de fgh", "de fgh abc"]);
-        extractor.extract_with_weights(text, &mut features);
-
-        assert_eq!(
-            features,
-            vec![
-                (config.hash(&["abc", "de"]), 0.25),
-                (config.hash(&["de", "fgh"]), 0.5),
-            ]
-        )
-    }
-
-    #[test]
-    fn test_word_trigram_tf() {
-        let config = FeatureConfig::new(3, Some(' '), 42);
-        let mut extractor = FeatureExtractor::new(config);
-
-        let text = "abc de fgh";
-        let mut features = vec![];
-
-        extractor.build_tf(["abc de fgh", "de fgh abc"]);
-        extractor.extract_with_weights(text, &mut features);
-
-        assert_eq!(features, vec![(config.hash(&["abc", "de", "fgh"]), 0.5)])
     }
 }
