@@ -1,6 +1,6 @@
 use std::fs::File;
 use std::io::{BufRead, BufReader};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use clap::Parser;
 use find_simdoc::feature::{FeatureConfig, FeatureExtractor};
@@ -25,7 +25,7 @@ struct Args {
     #[clap(short = 'w', long)]
     window_size: usize,
 
-    #[clap(short = 'c', long, default_value = "64")]
+    #[clap(short = 'c', long, default_value = "8")]
     num_chunks: usize,
 }
 
@@ -38,26 +38,16 @@ fn main() {
     let window_size = args.window_size;
     let num_chunks = args.num_chunks;
 
-    let texts = load_lines(text_path);
-    println!("#texts = {}", texts.len());
+    let texts = BufReader::new(File::open(text_path).unwrap())
+        .lines()
+        .map(|line| line.unwrap());
 
     let config = FeatureConfig::new(window_size, delimiter, 53);
-    let results = find_in_jaccard(texts.iter().clone(), radius, num_chunks, config);
-    println!("#results = {}", results.len());
+    let results = find_in_jaccard(texts, radius, num_chunks, config);
 
-    let mut fi = vec![];
-    let mut fj = vec![];
-    let mut extractor = FeatureExtractor::new(config);
-
-    for (i, j, d) in results {
-        let ti = &texts[i];
-        let tj = &texts[j];
-        extractor.extract(ti, &mut fi);
-        extractor.extract(tj, &mut fj);
-        let actual = lsh::jaccard_distance(&fi, &fj);
-        println!("[i={i},j={j},dist={d},act={actual}]");
-        println!("{}", texts[i]);
-        println!("{}", texts[j]);
+    println!("i,j,dist");
+    for (i, j, dist) in results {
+        println!("{i},{j},{dist}");
     }
 }
 
@@ -88,13 +78,4 @@ where
     // Modifies the distances.
     results.iter_mut().for_each(|(_, _, d)| *d *= 2.);
     results
-}
-
-fn load_lines<P>(path: P) -> Vec<String>
-where
-    P: AsRef<Path>,
-{
-    let file = File::open(path).unwrap();
-    let buf = BufReader::new(file);
-    buf.lines().map(|line| line.unwrap()).collect()
 }
