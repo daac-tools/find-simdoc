@@ -2,5 +2,6 @@
 members = [
     "lsh",
     "hamming-join",
+    "hamming-join/bench",
     "find-simdoc",
 ]

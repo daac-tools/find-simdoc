@@ -47,6 +47,10 @@ where
         self.num_chunks
     }
 
+    pub fn num_sketches(&self) -> usize {
+        self.sketches.len()
+    }
+
     fn hamming_distance(&self, i: usize, j: usize) -> usize {
         let xs = &self.sketches[i];
         let ys = &self.sketches[j];

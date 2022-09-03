@@ -60,6 +60,10 @@ where
         self.chunks.len()
     }
 
+    pub fn num_sketches(&self) -> usize {
+        self.chunks.get(0).map(|v| v.len()).unwrap_or(0)
+    }
+
     fn hamming_distance(&self, i: usize, j: usize) -> usize {
         let mut dist = 0;
         for chunk in &self.chunks {
