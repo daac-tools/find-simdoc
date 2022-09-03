@@ -16,3 +16,7 @@ hashbrown = "0.12.3"
 [[bin]]
 name = "jac"
 path = "src/bin/jac.rs"
+
+[[bin]]
+name = "cos"
+path = "src/bin/cos.rs"

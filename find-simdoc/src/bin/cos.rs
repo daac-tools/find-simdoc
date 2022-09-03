@@ -5,12 +5,12 @@ use std::path::{Path, PathBuf};
 use clap::Parser;
 use find_simdoc::feature::{FeatureConfig, FeatureExtractor};
 use hamming_join::simple_join::SimpleJoiner;
-use lsh::minhash::MinHasher;
+use lsh::simhash::SimHasher;
 
 #[derive(Parser, Debug)]
 #[clap(
-    name = "find-simdoc-jac",
-    about = "A program to find similar documents in the Jaccard space."
+    name = "find-simdoc-cos",
+    about = "A program to find similar documents in the Cosine space."
 )]
 struct Args {
     #[clap(short = 'i', long, action)]
@@ -42,25 +42,16 @@ fn main() {
     println!("#texts = {}", texts.len());
 
     let config = FeatureConfig::new(window_size, delimiter, 53);
-    let results = find_in_jaccard(texts.iter().clone(), radius, num_chunks, config);
+    let results = find_in_cosine(texts.iter().clone(), radius, num_chunks, config);
 
-    let mut extractor = FeatureExtractor::new(config);
-
-    let mut fi = vec![];
-    let mut fj = vec![];
     for (i, j, d) in results {
-        let ti = &texts[i];
-        let tj = &texts[j];
-        extractor.extract(ti, &mut fi);
-        extractor.extract(tj, &mut fj);
-        let actual = lsh::jaccard_distance(&fi, &fj);
-        println!("[i={i},j={j},dist={d},act={actual}]");
+        println!("[i={i},j={j},dist={d}]");
         println!("{}", texts[i]);
         println!("{}", texts[j]);
     }
 }
 
-fn find_in_jaccard<I, S>(
+fn find_in_cosine<I, S>(
     texts: I,
     radius: f64,
     num_chunks: usize,
@@ -70,23 +61,16 @@ where
     I: Iterator<Item = S>,
     S: AsRef<str>,
 {
-    let hasher = MinHasher::new(42);
+    let hasher = SimHasher::new(42);
     let mut extractor = FeatureExtractor::new(config);
     let mut joiner = SimpleJoiner::<u64>::new(num_chunks);
 
     let mut features = vec![];
     for text in texts {
-        extractor.extract(text.as_ref(), &mut features);
+        extractor.extract_with_weights(text.as_ref(), &mut features);
         joiner.add(hasher.iter(&features));
     }
-
-    // In 1-bit minhash, the collision probability is multiplied by 2 over the original.
-    // Thus, we should search with the half of the actual radius.
-    let mut results = joiner.similar_pairs(radius / 2.);
-
-    // Modifies the distances.
-    results.iter_mut().for_each(|(_, _, d)| *d *= 2.);
-    results
+    joiner.similar_pairs(radius)
 }
 
 fn load_lines<P>(path: P) -> Vec<String>

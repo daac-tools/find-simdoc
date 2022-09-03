@@ -105,18 +105,26 @@ impl FeatureExtractor {
         features.clear();
         if self.config.delimiter.is_none() && self.config.window_size == 1 {
             // The simplest case.
-            let weights = self.weights.as_ref().unwrap();
+            let weights = self.weights.as_ref();
             text.chars().for_each(|c| {
                 let f = c as u64;
-                let w = *weights.get(&f).unwrap_or(&0.);
+                let w = if let Some(weights) = weights {
+                    *weights.get(&f).unwrap_or(&1.)
+                } else {
+                    1.
+                };
                 features.push((f, w))
             });
         } else {
             self.tokenize(text);
-            let weights = self.weights.as_ref().unwrap();
+            let weights = self.weights.as_ref();
             for ranges in ShingleIter::new(&self.token_ranges, self.config.window_size) {
                 let f = self.config.hash(ranges.iter().cloned().map(|r| &text[r]));
-                let w = *weights.get(&f).unwrap_or(&0.);
+                let w = if let Some(weights) = weights {
+                    *weights.get(&f).unwrap_or(&1.)
+                } else {
+                    1.
+                };
                 features.push((f, w))
             }
         }
