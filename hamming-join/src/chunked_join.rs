@@ -34,7 +34,7 @@ where
         let mut candidates = vec![];
         for chunk in &self.chunks {
             let r = hamdist / self.num_chunks();
-            let results = MultiSort::similar_pairs(chunk, r, r);
+            let results = MultiSort::similar_pairs(chunk, r, S::dim().min(r + 3));
             candidates.extend(results);
         }
         candidates.sort_unstable();
