@@ -1,17 +1,11 @@
 [package]
-name = "bench"
+name = "timeperf"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-
-[dev-dependencies]
 hamming-join = { path = ".." }  # MIT or Apache-2.0
 criterion = { version = "0.3", features = ["html_reports"] }  # Apache-2.0 or MIT
 rand = "0.8.5"
-
-[[bench]]
-name = "bench_join"
-harness = false
