@@ -8,7 +8,6 @@ edition = "2021"
 [dependencies]
 hamming-join = { path = "../hamming-join" }  # MIT or Apache-2.0
 lsh = { path = "../lsh" }  # MIT or Apache-2.0
-
 clap = { version = "3.1", features = ["derive"] }  # MIT or Apache-2.0
 fasthash = "0.4.0"
 rand = "0.8.5"
@@ -21,3 +20,7 @@ path = "src/bin/jaccard.rs"
 [[bin]]
 name = "cosine"
 path = "src/bin/cosine.rs"
+
+[[bin]]
+name = "dump"
+path = "src/bin/dump.rs"
