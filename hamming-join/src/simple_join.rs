@@ -30,9 +30,6 @@ where
 
     pub fn similar_pairs(&self, radius: f64) -> Vec<(usize, usize, f64)> {
         let dimension = S::dim() * self.num_chunks();
-        let hamdist = (dimension as f64 * radius).ceil() as usize;
-        println!("dimension={dimension}, hamdist={hamdist}");
-
         let mut matched = vec![];
         for i in 0..self.sketches.len() {
             for j in i + 1..self.sketches.len() {

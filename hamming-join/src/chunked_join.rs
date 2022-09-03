@@ -28,7 +28,7 @@ where
     pub fn similar_pairs(&self, radius: f64) -> Vec<(usize, usize, f64)> {
         let dimension = S::dim() * self.num_chunks();
         let hamdist = (dimension as f64 * radius).ceil() as usize;
-        println!("dimension={dimension}, hamdist={hamdist}");
+        // println!("dimension={dimension}, hamdist={hamdist}");
 
         // Can be threaded.
         let mut candidates = vec![];
@@ -43,7 +43,7 @@ where
         }
         candidates.sort_unstable();
         candidates.dedup();
-        println!("#candidates={}", candidates.len());
+        // println!("#candidates={}", candidates.len());
 
         let mut matched = vec![];
         for (i, j) in candidates {
