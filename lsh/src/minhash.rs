@@ -10,7 +10,7 @@ pub struct MinHasher {
 }
 
 impl MinHasher {
-    pub fn new(seed: u64) -> Self {
+    pub const fn new(seed: u64) -> Self {
         Self { seed }
     }
 

@@ -42,7 +42,7 @@ pub struct FeatureExtractor {
 }
 
 impl FeatureExtractor {
-    pub fn new(config: FeatureConfig) -> Self {
+    pub const fn new(config: FeatureConfig) -> Self {
         Self {
             config,
             token_ranges: vec![],
@@ -64,8 +64,9 @@ impl FeatureExtractor {
 
     fn tokenize(&mut self, text: &str) {
         self.token_ranges.clear();
+
+        let mut offset = 0;
         if let Some(delim) = self.config.delimiter {
-            let mut offset = 0;
             while offset < text.len() {
                 let len = text[offset..].find(delim);
                 if let Some(len) = len {
@@ -77,7 +78,6 @@ impl FeatureExtractor {
                 }
             }
         } else {
-            let mut offset = 0;
             for c in text.chars() {
                 let len = c.len_utf8();
                 self.token_ranges.push(offset..offset + len);

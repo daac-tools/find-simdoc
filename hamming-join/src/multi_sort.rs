@@ -48,9 +48,9 @@ where
     fn masks(num_blocks: usize) -> Vec<S> {
         let mut masks = vec![S::default(); num_blocks];
         let mut i = 0;
-        for b in 0..num_blocks {
+        for (b, mask) in masks.iter_mut().enumerate().take(num_blocks) {
             let dim = (b + S::dim()) / num_blocks;
-            masks[b] = S::mask(i..i + dim);
+            *mask = S::mask(i..i + dim);
             i += dim;
         }
         masks
@@ -87,8 +87,7 @@ where
     ) {
         for i in 0..records.len() {
             let x = &records[i];
-            for j in i + 1..records.len() {
-                let y = &records[j];
+            for y in records.iter().skip(i + 1) {
                 debug_assert!(self.debug_block_collisions(x.sketch, y.sketch, blocks));
                 if x.sketch.hamdist(y.sketch) <= self.radius
                     && self.check_canonical(x.sketch, y.sketch, blocks)
@@ -112,7 +111,7 @@ where
                 return false;
             }
         }
-        return true;
+        true
     }
 
     fn sort_sketches(&self, block_id: usize, records: &mut [Record<S>]) {

@@ -22,8 +22,8 @@ impl FromStr for Metric {
     type Err = &'static str;
     fn from_str(metric: &str) -> Result<Self, Self::Err> {
         match metric {
-            "jac" => Ok(Metric::Jaccard),
-            "cos" => Ok(Metric::Cosine),
+            "jac" => Ok(Self::Jaccard),
+            "cos" => Ok(Self::Cosine),
             _ => Err("Could not parse a metric option"),
         }
     }
@@ -99,7 +99,7 @@ where
         joiner.add(hasher.iter(features));
     }
 
-    // In 1-bit minhash, the collision probability is multiplied by 2.
+    // In 1-bit minhash, the collision probability is multiplied by 2 over the original.
     // Thus, we should search with the half of the actual radius.
     let mut results = joiner.similar_pairs(radius / 2.);
 

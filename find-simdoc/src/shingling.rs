@@ -5,7 +5,7 @@ pub struct ShingleIter<'a, T> {
 }
 
 impl<'a, T> ShingleIter<'a, T> {
-    pub fn new(tokens: &'a [T], window_size: usize) -> Self {
+    pub const fn new(tokens: &'a [T], window_size: usize) -> Self {
         Self {
             tokens,
             window_size,

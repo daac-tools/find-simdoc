@@ -2,17 +2,17 @@
 pub struct Bitset64(u64);
 
 impl Bitset64 {
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self(0)
     }
 
-    pub fn add(mut self, i: usize) -> Self {
+    pub const fn add(mut self, i: usize) -> Self {
         assert!(i < 64);
         self.0 |= 1 << i;
         self
     }
 
-    pub fn max(&self) -> Option<usize> {
+    pub const fn max(&self) -> Option<usize> {
         if self.0 == 0 {
             None
         } else {
@@ -20,20 +20,20 @@ impl Bitset64 {
         }
     }
 
-    pub fn inverse(mut self) -> Self {
+    pub const fn inverse(mut self) -> Self {
         self.0 = !self.0;
         self
     }
 
-    pub fn iter(&self) -> Bitset64Iter {
+    pub const fn iter(&self) -> Bitset64Iter {
         Bitset64Iter(self.0)
     }
 
-    pub fn len(&self) -> usize {
+    pub const fn len(&self) -> usize {
         self.0.count_ones() as usize
     }
 
-    pub fn is_empty(&self) -> bool {
+    pub const fn is_empty(&self) -> bool {
         self.len() == 0
     }
 }

@@ -9,7 +9,7 @@ impl<S> SimpleJoiner<S>
 where
     S: Sketch,
 {
-    pub fn new(num_chunks: usize) -> Self {
+    pub const fn new(num_chunks: usize) -> Self {
         Self {
             sketches: vec![],
             num_chunks,
@@ -46,7 +46,7 @@ where
         matched
     }
 
-    pub fn num_chunks(&self) -> usize {
+    pub const fn num_chunks(&self) -> usize {
         self.num_chunks
     }
 
