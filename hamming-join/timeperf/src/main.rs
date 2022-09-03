@@ -7,7 +7,7 @@ use hamming_join::simple_join::SimpleJoiner;
 
 const TRIALS: usize = 1;
 const MIN_SKETCHES: usize = 1_000;
-const MAX_SKETCHES: usize = 100_000;
+const MAX_SKETCHES: usize = 1_000_000;
 const MIN_CHUNKS: usize = 1;
 const MAX_CHUNKS: usize = 4;
 const RADII: [f64; 4] = [0.01, 0.02, 0.05, 0.1];
