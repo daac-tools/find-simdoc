@@ -245,4 +245,122 @@ mod tests {
         extractor.extract(text, &mut features);
         assert_eq!(features, vec![config.hash(&["abc", "de", "fgh"])])
     }
+
+    #[test]
+    fn test_char_unigram_tf() {
+        let config = FeatureConfig::new(1, None, 42);
+        let mut extractor = FeatureExtractor::new(config);
+
+        let text = "abcd";
+        let mut features = vec![];
+
+        extractor.build_tf(["ab", "ac"]);
+        extractor.extract_with_weights(text, &mut features);
+
+        assert_eq!(
+            features,
+            vec![
+                ('a' as u64, 0.5),
+                ('b' as u64, 0.25),
+                ('c' as u64, 0.25),
+                ('d' as u64, 0.0)
+            ]
+        )
+    }
+
+    #[test]
+    fn test_char_bigram_tf() {
+        let config = FeatureConfig::new(2, None, 42);
+        let mut extractor = FeatureExtractor::new(config);
+
+        let text = "abcd";
+        let mut features = vec![];
+
+        extractor.build_tf(["abc", "aca"]);
+        extractor.extract_with_weights(text, &mut features);
+
+        assert_eq!(
+            features,
+            vec![
+                (config.hash(&["a", "b"]), 0.25),
+                (config.hash(&["b", "c"]), 0.25),
+                (config.hash(&["c", "d"]), 0.),
+            ]
+        )
+    }
+
+    #[test]
+    fn test_char_trigram_tf() {
+        let config = FeatureConfig::new(3, None, 42);
+        let mut extractor = FeatureExtractor::new(config);
+
+        let text = "abcd";
+        let mut features = vec![];
+
+        extractor.build_tf(["abcd", "aabc"]);
+        extractor.extract_with_weights(text, &mut features);
+
+        assert_eq!(
+            features,
+            vec![
+                (config.hash(&["a", "b", "c"]), 0.5),
+                (config.hash(&["b", "c", "d"]), 0.25),
+            ]
+        )
+    }
+
+    #[test]
+    fn test_word_unigram_tf() {
+        let config = FeatureConfig::new(1, Some(' '), 42);
+        let mut extractor = FeatureExtractor::new(config);
+
+        let text = "abc de fgh";
+        let mut features = vec![];
+
+        extractor.build_tf(["abc de fgh", "abc"]);
+        extractor.extract_with_weights(text, &mut features);
+
+        assert_eq!(
+            features,
+            vec![
+                (config.hash(&["abc"]), 0.5),
+                (config.hash(&["de"]), 0.25),
+                (config.hash(&["fgh"]), 0.25),
+            ]
+        )
+    }
+
+    #[test]
+    fn test_word_bigram_tf() {
+        let config = FeatureConfig::new(2, Some(' '), 42);
+        let mut extractor = FeatureExtractor::new(config);
+
+        let text = "abc de fgh";
+        let mut features = vec![];
+
+        extractor.build_tf(["abc de fgh", "de fgh abc"]);
+        extractor.extract_with_weights(text, &mut features);
+
+        assert_eq!(
+            features,
+            vec![
+                (config.hash(&["abc", "de"]), 0.25),
+                (config.hash(&["de", "fgh"]), 0.5),
+            ]
+        )
+    }
+
+    #[test]
+    fn test_word_trigram_tf() {
+        let config = FeatureConfig::new(3, Some(' '), 42);
+        let mut extractor = FeatureExtractor::new(config);
+
+        let text = "abc de fgh";
+        let mut features = vec![];
+
+        extractor.build_tf(["abc de fgh", "de fgh abc"]);
+        extractor.extract_with_weights(text, &mut features);
+
+        assert_eq!(features, vec![(config.hash(&["abc", "de", "fgh"]), 0.5)])
+    }
 }
