@@ -9,7 +9,7 @@ use lsh::simhash::SimHasher;
 
 #[derive(Parser, Debug)]
 #[clap(
-    name = "find-simdoc-cos",
+    name = "find-simdoc-cosine",
     about = "A program to find similar documents in the Cosine space."
 )]
 struct Args {

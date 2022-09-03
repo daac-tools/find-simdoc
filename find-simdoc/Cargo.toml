@@ -13,9 +13,9 @@ clap = { version = "3.1", features = ["derive"] }  # MIT or Apache-2.0
 fasthash = "0.4.0"
 
 [[bin]]
-name = "jac"
-path = "src/bin/jac.rs"
+name = "jaccard"
+path = "src/bin/jaccard.rs"
 
 [[bin]]
-name = "cos"
-path = "src/bin/cos.rs"
+name = "cosine"
+path = "src/bin/cosine.rs"

@@ -9,7 +9,7 @@ use lsh::minhash::MinHasher;
 
 #[derive(Parser, Debug)]
 #[clap(
-    name = "find-simdoc-jac",
+    name = "find-simdoc-jaccard",
     about = "A program to find similar documents in the Jaccard space."
 )]
 struct Args {
