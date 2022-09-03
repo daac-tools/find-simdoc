@@ -32,8 +32,12 @@ where
 
         // Can be threaded.
         let mut candidates = vec![];
-        for chunk in &self.chunks {
-            let r = hamdist / self.num_chunks();
+        for (j, chunk) in self.chunks.iter().enumerate() {
+            // Based on the general pigeonhole principle.
+            if j + hamdist + 1 < self.chunks.len() {
+                continue;
+            }
+            let r = (j + hamdist + 1 - self.chunks.len()) / self.chunks.len();
             let results = MultiSort::similar_pairs(chunk, r, S::dim().min(r + 3));
             candidates.extend(results);
         }
