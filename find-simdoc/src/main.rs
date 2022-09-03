@@ -1,4 +1,3 @@
-pub mod exact;
 pub mod feature;
 pub mod shingling;
 
@@ -73,7 +72,7 @@ fn main() {
         let tj = &texts[j];
         let fi = extractor.extract(ti).to_vec();
         let fj = extractor.extract(tj).to_vec();
-        let actual = exact::jaccard_distance(fi, fj);
+        let actual = lsh::jaccard_distance(fi, fj);
         println!("[i={i},j={j},dist={d},act={actual}]");
         println!("{}", texts[i]);
         println!("{}", texts[j]);
