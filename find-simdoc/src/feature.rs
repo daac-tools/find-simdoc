@@ -1,4 +1,5 @@
 use std::hash::{Hash, Hasher};
+use std::ops::Range;
 
 use fasthash::{CityHasher, FastHasher};
 
@@ -21,34 +22,35 @@ impl FeatureConfig {
         }
     }
 
-    fn hash<T>(&self, items: &[T]) -> u64
+    fn hash<I, T>(&self, iter: I) -> u64
     where
+        I: IntoIterator<Item = T>,
         T: Hash,
     {
         let mut s = CityHasher::with_seed(self.seed);
-        for t in items {
+        for t in iter {
             t.hash(&mut s);
         }
         s.finish()
     }
 }
 
-pub struct FeatureExtractor<'a> {
+pub struct FeatureExtractor {
     config: FeatureConfig,
-    tokens: Vec<&'a str>,
+    token_ranges: Vec<Range<usize>>,
     features: Vec<u64>,
 }
 
-impl<'a> FeatureExtractor<'a> {
+impl FeatureExtractor {
     pub fn new(config: FeatureConfig) -> Self {
         Self {
             config,
-            tokens: vec![],
+            token_ranges: vec![],
             features: vec![],
         }
     }
 
-    pub fn extract(&mut self, text: &'a str) -> &[u64] {
+    pub fn extract(&mut self, text: &str) -> &[u64] {
         self.features.clear();
         // The simplest case.
         if self.config.delimiter.is_none() && self.config.window_size == 1 {
@@ -56,27 +58,38 @@ impl<'a> FeatureExtractor<'a> {
             return &self.features;
         }
         self.tokenize(text);
-        self.build_features();
+        self.build_features(text);
         &self.features
     }
 
-    fn tokenize(&mut self, text: &'a str) {
-        self.tokens.clear();
+    fn tokenize(&mut self, text: &str) {
+        self.token_ranges.clear();
         if let Some(delim) = self.config.delimiter {
-            text.split(delim).for_each(|s| self.tokens.push(s));
+            let mut offset = 0;
+            while offset < text.len() {
+                let len = text[offset..].find(delim);
+                if let Some(len) = len {
+                    self.token_ranges.push(offset..offset + len);
+                    offset += len + 1;
+                } else {
+                    self.token_ranges.push(offset..text.len());
+                    break;
+                }
+            }
         } else {
             let mut offset = 0;
             for c in text.chars() {
-                let len_utf8 = c.len_utf8();
-                self.tokens.push(&text[offset..offset + len_utf8]);
-                offset += len_utf8;
+                let len = c.len_utf8();
+                self.token_ranges.push(offset..offset + len);
+                offset += len;
             }
         }
     }
 
-    fn build_features(&mut self) {
-        for gram in ShingleIter::new(&self.tokens, self.config.window_size) {
-            self.features.push(self.config.hash(gram));
+    fn build_features(&mut self, text: &str) {
+        for ranges in ShingleIter::new(&self.token_ranges, self.config.window_size) {
+            self.features
+                .push(self.config.hash(ranges.iter().cloned().map(|r| &text[r])));
         }
     }
 }

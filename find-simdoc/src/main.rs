@@ -1,3 +1,4 @@
+pub mod exact;
 pub mod feature;
 pub mod shingling;
 
@@ -21,8 +22,8 @@ impl FromStr for Metric {
     type Err = &'static str;
     fn from_str(metric: &str) -> Result<Self, Self::Err> {
         match metric {
-            "jaccard" => Ok(Metric::Jaccard),
-            "cosine" => Ok(Metric::Cosine),
+            "jac" => Ok(Metric::Jaccard),
+            "cos" => Ok(Metric::Cosine),
             _ => Err("Could not parse a metric option"),
         }
     }
@@ -45,6 +46,9 @@ struct Args {
 
     #[clap(short = 'w', long, action)]
     window_size: usize,
+
+    #[clap(short = 'c', long, action, default_value = "64")]
+    num_chunks: usize,
 }
 
 fn main() {
@@ -55,26 +59,53 @@ fn main() {
     let radius = args.radius;
     let delimiter = args.delimiter;
     let window_size = args.window_size;
-    let num_chunks = 64;
+    let num_chunks = args.num_chunks;
 
     let texts = load_lines(text_path);
     println!("#texts = {}", texts.len());
 
-    let mut extractor = FeatureExtractor::new(FeatureConfig::new(window_size, delimiter, 53));
-    let mut joiner = SimpleJoiner::<u64>::new(num_chunks);
-    let hasher = MinHasher::new(42);
+    let feature_config = FeatureConfig::new(window_size, delimiter, 53);
+    let results = find_in_jaccard(texts.iter().clone(), radius, num_chunks, feature_config);
 
-    for text in &texts {
-        let features = extractor.extract(text);
-        joiner.add(hasher.iter(features));
-    }
-
-    let results = joiner.similar_pairs(radius);
+    let mut extractor = FeatureExtractor::new(feature_config);
     for (i, j, d) in results {
-        println!("[i={i},j={j},dist={d}]");
+        let ti = &texts[i];
+        let tj = &texts[j];
+        let fi = extractor.extract(ti).to_vec();
+        let fj = extractor.extract(tj).to_vec();
+        let actual = exact::jaccard_distance(fi, fj);
+        println!("[i={i},j={j},dist={d},act={actual}]");
         println!("{}", texts[i]);
         println!("{}", texts[j]);
     }
+}
+
+fn find_in_jaccard<I, S>(
+    texts: I,
+    radius: f64,
+    num_chunks: usize,
+    feature_config: FeatureConfig,
+) -> Vec<(usize, usize, f64)>
+where
+    I: Iterator<Item = S>,
+    S: AsRef<str>,
+{
+    let mut extractor = FeatureExtractor::new(feature_config);
+    let mut joiner = SimpleJoiner::<u64>::new(num_chunks);
+
+    let hasher = MinHasher::new(42);
+    for text in texts {
+        let features = extractor.extract(text.as_ref());
+        joiner.add(hasher.iter(features));
+    }
+
+    // In 1-bit minhash, the collision probability is multiplied by 2.
+    // Thus, we should search with the half of the actual radius.
+    let mut results = joiner.similar_pairs(radius / 2.);
+
+    // Modifies the distances.
+    results.iter_mut().for_each(|(_, _, d)| *d *= 2.);
+    results
 }
 
 fn load_lines<P>(path: P) -> Vec<String>
