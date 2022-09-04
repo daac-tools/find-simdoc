@@ -85,6 +85,9 @@ where
                 matched.push((i, j, dist));
             }
         }
+        if self.shows_progress {
+            eprintln!("[ChunkedJoiner::similar_pairs] #matched={}", matched.len());
+        }
         matched
     }
 

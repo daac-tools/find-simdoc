@@ -60,6 +60,7 @@ where
         }
         if self.shows_progress {
             eprintln!("[SimpleJoiner::similar_pairs] Done");
+            eprintln!("[SimpleJoiner::similar_pairs] #matched={}", matched.len());
         }
         matched
     }
