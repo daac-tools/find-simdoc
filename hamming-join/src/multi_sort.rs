@@ -16,6 +16,7 @@ pub struct MultiSort<S> {
     radius: usize,
     num_blocks: usize,
     masks: Vec<S>,
+    _offsets: Vec<usize>,
 }
 
 impl<S> MultiSort<S>
@@ -29,11 +30,12 @@ where
         assert!(radius <= num_blocks);
         assert!(num_blocks <= S::dim());
 
-        let masks = Self::masks(num_blocks);
+        let (masks, offsets) = Self::build_masks_and_offsets(num_blocks);
         let this = Self {
             radius,
             num_blocks,
             masks,
+            _offsets: offsets,
         };
         let mut records: Vec<_> = sketches
             .iter()
@@ -45,15 +47,18 @@ where
         results
     }
 
-    fn masks(num_blocks: usize) -> Vec<S> {
+    fn build_masks_and_offsets(num_blocks: usize) -> (Vec<S>, Vec<usize>) {
         let mut masks = vec![S::default(); num_blocks];
+        let mut offsets = vec![0; num_blocks + 1];
+
         let mut i = 0;
         for (b, mask) in masks.iter_mut().enumerate().take(num_blocks) {
             let dim = (b + S::dim()) / num_blocks;
             *mask = S::mask(i..i + dim);
             i += dim;
+            offsets[b + 1] = i;
         }
-        masks
+        (masks, offsets)
     }
 
     fn similar_pairs_recur(
@@ -119,6 +124,23 @@ where
         let mask = self.masks[block_id];
         records.sort_unstable_by(|x, y| (x.sketch & mask).cmp(&(y.sketch & mask)));
     }
+
+    // fn sort_sketches(&self, block_id: usize, records: &mut [Record<S>]) {
+    //     let mask = self.masks[block_id];
+    //     let offset = self.offsets[block_id];
+    //     let dimension = self.offsets[block_id + 1] - self.offsets[block_id];
+
+    //     let mut bucket = [0usize; 256];
+    //     for j in (0..dimension).step_by(8) {
+    //         for x in records {
+    //             let k = (x.sketch & mask) >> j;
+    //             let k: usize = k.try_into().unwrap();
+    //             bucket[k] += 1;
+    //         }
+    //     }
+
+    //     records.sort_unstable_by(|x, y| (x.sketch & mask).cmp(&(y.sketch & mask)));
+    // }
 
     fn collision_ranges(
         &self,

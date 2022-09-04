@@ -1,10 +1,10 @@
-use std::cmp::Ord;
-use std::fmt::{Binary, Debug};
-use std::ops::{BitAnd, Range};
+use std::ops::Range;
+use std::usize;
 
-pub trait Sketch:
-    Default + Debug + Binary + Clone + Copy + BitAnd<Output = Self> + PartialEq + Eq + Ord
-{
+use num_traits::int::PrimInt;
+use num_traits::{FromPrimitive, ToPrimitive};
+
+pub trait Sketch: Default + PrimInt + FromPrimitive + ToPrimitive {
     fn dim() -> usize;
     fn hamdist(self, rhs: Self) -> usize;
     fn mask(rng: Range<usize>) -> Self;
