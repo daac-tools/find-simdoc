@@ -48,7 +48,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         .lines()
         .map(|line| line.unwrap());
 
-    let mut seeder = rand_xoshiro::SplitMix64::seed_from_u64(seed.unwrap_or(rand::random::<u64>()));
+    let mut seeder =
+        rand_xoshiro::SplitMix64::seed_from_u64(seed.unwrap_or_else(rand::random::<u64>));
 
     let config = FeatureConfig::new(window_size, delimiter, seeder.next_u64());
     let results = find_in_cosine(texts, radius, num_chunks, seeder.next_u64(), config);
