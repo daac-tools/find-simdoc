@@ -77,9 +77,12 @@ where
     let mut extractor = FeatureExtractor::new(config);
     let mut joiner = ChunkedJoiner::<u64>::new(num_chunks).shows_progress(true);
 
+    eprintln!("[find_in_jaccard] Converting texts into sketches...");
     let mut features = vec![];
     for text in texts {
-        extractor.extract(text.as_ref(), &mut features);
+        let text = text.as_ref();
+        assert!(!text.is_empty());
+        extractor.extract(text, &mut features);
         joiner.add(hasher.iter(&features));
     }
 

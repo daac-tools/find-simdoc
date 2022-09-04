@@ -5,7 +5,10 @@ pub struct ShingleIter<'a, T> {
 }
 
 impl<'a, T> ShingleIter<'a, T> {
-    pub const fn new(tokens: &'a [T], window_size: usize) -> Self {
+    pub fn new(tokens: &'a [T], window_size: usize) -> Self {
+        assert!(!tokens.is_empty());
+        // Avoid to generate empty features
+        let window_size = window_size.min(tokens.len());
         Self {
             tokens,
             window_size,
