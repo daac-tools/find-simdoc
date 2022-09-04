@@ -1,4 +1,4 @@
-# find-simdoc: Finding similar documents
+# Finding similar documents
 
 This is software for quickly finding all pairs of similar documents.
 
@@ -48,6 +48,8 @@ The approach consists of the three steps:
 
 In Step 1, the current version supports only set representations.
 Supporting weighting approaches such as TFIDF is the future work.
+In Step 3, we employ a modified variant of the [chunked multiple sorting approach](https://proceedings.mlr.press/v13/tabei10a.html)
+for quickly finding all pairs of similar sketches.
 
 #### In the Jaccard space
 
