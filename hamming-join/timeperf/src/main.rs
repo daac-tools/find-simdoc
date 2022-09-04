@@ -54,20 +54,6 @@ fn main_percent(percent: u64) {
         sketches.push(chunks);
     }
     {
-        let radii = &RADII[..1];
-        let chunks = &CHUNKS[..];
-        let scales = &SCALES[..3];
-        timeperf_common!(
-            percent,
-            "simple_join",
-            SimpleJoiner,
-            sketches,
-            radii,
-            chunks,
-            scales
-        );
-    }
-    {
         let radii = &RADII[..];
         let chunks = &CHUNKS[..];
         let scales = &SCALES[..];
@@ -75,6 +61,20 @@ fn main_percent(percent: u64) {
             percent,
             "chunked_join",
             ChunkedJoiner,
+            sketches,
+            radii,
+            chunks,
+            scales
+        );
+    }
+    {
+        let radii = &RADII[..1];
+        let chunks = &CHUNKS[..];
+        let scales = &SCALES[..3];
+        timeperf_common!(
+            percent,
+            "simple_join",
+            SimpleJoiner,
             sketches,
             radii,
             chunks,
