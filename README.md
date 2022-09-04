@@ -1,13 +1,13 @@
-# find-simdoc
+# find-simdoc: Finding similar documents
 
 This is software for quickly finding all pairs of similar documents.
 
-## Example of finding similar documents
+## Example of finding similar sentences
 
 This software is implemented in Rust.
 First of all, install `rustc` and `cargo` following the [official instructions](https://www.rust-lang.org/tools/install).
 
-### Data preparation
+### 1. Data preparation
 
 You can prepare the document file used in this example using `scripts/load_nltk_sents.py`.
 From the Reuters Corpus provided by NLTK, you can produce line-separated sentences
@@ -22,7 +22,7 @@ $ ./scripts/load_nltk_sents.py reuters
 ```
 $ head reuters.txt
 hre properties & lt ; hre > 1st qtr jan 31 net shr 38 cts vs 47 cts net 2 , 253 , 664 vs 2 , 806 , 820 gross income 5 , 173 , 318 vs 5 , 873 , 904 note : net includes gains on sale of real estate of 126 , 117 dlrs vs 29 , 812 dlrs .
-the firm , however , is supplying temporary financing , and sources close to the transaction disputed the claim that the firm will not end up paying for its equity position .
+the firm , however , is supplying temporary financing , and sources close to the transaction disputed the claim that the firm will not end up paying for its equity position . 
 conoco , which has completed geological prospecting for the tunisian government , has transferred one third of its option rights in the region to ina , it said .
 " willis faber ' s stake in morgan grenfell has been a very successful investment ," it said .
 china reports 700 mln dlr two - month trade deficit china ' s trade deficit totalled 700 mln dlrs in the first two months of this year , according to figures released by the state statistics bureau .
@@ -33,7 +33,21 @@ since last august smart has been leading talks to open up japan to purchases of 
 the resulting association will operate under the name of charter and will be based in bristol .
 ```
 
-### Finding all pairs of similar sentences
+### 2. Finding all pairs of similar sentences
+
+The workspace `find-simdoc` provides CLI tools for fast all-pair similar searches in a document file.
+The approach consists of the three steps:
+
+1. Extract features from sentences
+   - Set representation of character $q$-grams
+   - Set representation of word $q$-grams
+2. Convert the features into binary sketches through LSH
+   - [1-bit minwise hashing](https://arxiv.org/abs/0910.3349) for the Jaccard similarity
+   - [Simplified simhash](https://dl.acm.org/doi/10.1145/1242572.1242592) for the Cosine similarity
+3. Search for similar sketches using the [chunked multiple sorting approach](https://proceedings.mlr.press/v13/tabei10a.html)
+
+In Step 1, the current version supports only set representations.
+Supporting weighting approaches such as TFIDF is the future work.
 
 #### In the Jaccard space
 
@@ -75,7 +89,7 @@ i,j,dist
 1585,6615,0.13671875
 ```
 
-### Printing similar sentences
+### 3. Printing similar sentences
 
 ```
 $ cargo run --release -p find-simdoc --bin dump -- -i reuters.txt -s result-jaccard.csv
