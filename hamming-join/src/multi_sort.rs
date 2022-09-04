@@ -1,9 +1,13 @@
+use std::cell::RefCell;
 use std::ops::Range;
 
 use crate::bitset64::Bitset64;
 use crate::sketch::Sketch;
 
-#[derive(Clone, Debug)]
+const SORT_SHIFT: usize = 8;
+const SORT_MASK: usize = (1 << SORT_SHIFT) - 1;
+
+#[derive(Clone, Debug, Default)]
 struct Record<S> {
     id: usize,
     sketch: S,
@@ -16,6 +20,10 @@ pub struct MultiSort<S> {
     radius: usize,
     num_blocks: usize,
     masks: Vec<S>,
+    offsets: Vec<usize>,
+    // Buffers for radix sort
+    buckets: RefCell<[usize; SORT_MASK + 1]>,
+    sorted: RefCell<Vec<Record<S>>>,
 }
 
 impl<S> MultiSort<S>
@@ -27,12 +35,19 @@ where
         assert!(radius <= num_blocks);
         assert!(num_blocks <= S::dim());
 
-        let masks = Self::build_masks(num_blocks);
+        let (masks, offsets) = Self::build_masks_and_offsets(num_blocks);
+        let buckets = [0usize; SORT_MASK + 1];
+        let sorted = Vec::with_capacity(sketches.len());
+
         let this = Self {
             radius,
             num_blocks,
             masks,
+            offsets,
+            buckets: RefCell::new(buckets),
+            sorted: RefCell::new(sorted),
         };
+
         let mut records: Vec<_> = sketches
             .iter()
             .enumerate()
@@ -43,15 +58,17 @@ where
         results
     }
 
-    fn build_masks(num_blocks: usize) -> Vec<S> {
+    fn build_masks_and_offsets(num_blocks: usize) -> (Vec<S>, Vec<usize>) {
         let mut masks = vec![S::default(); num_blocks];
+        let mut offsets = vec![0; num_blocks + 1];
         let mut i = 0;
         for (b, mask) in masks.iter_mut().enumerate().take(num_blocks) {
             let dim = (b + S::dim()) / num_blocks;
             *mask = S::mask(i..i + dim);
             i += dim;
+            offsets[b + 1] = i;
         }
-        masks
+        (masks, offsets)
     }
 
     fn similar_pairs_recur(
@@ -113,12 +130,42 @@ where
     }
 
     fn sort_sketches(&self, block_id: usize, records: &mut [Record<S>]) {
-        // To achieve O(n+occ) time, it is necessary to employ the radix sorting.
-        // However, frequenctly performing radix sortings for small slices takes more time
-        // than the quick sorting in my experiments, maybe because of the non-in-place manner.
-        // TODO: Investigate a threshold to use the radix or quick sorting.
+        if records.len() < 1_000 {
+            self.quick_sort_sketches(block_id, records);
+        } else {
+            self.radix_sort_sketches(block_id, records);
+        }
+    }
+
+    fn quick_sort_sketches(&self, block_id: usize, records: &mut [Record<S>]) {
         let mask = self.masks[block_id];
         records.sort_unstable_by(|x, y| (x.sketch & mask).cmp(&(y.sketch & mask)));
+    }
+
+    fn radix_sort_sketches(&self, block_id: usize, records: &mut [Record<S>]) {
+        let mut buckets = self.buckets.borrow_mut();
+        let mut sorted = self.sorted.borrow_mut();
+        sorted.resize(records.len(), Record::<S>::default());
+
+        let mask = self.masks[block_id];
+        for j in (self.offsets[block_id]..self.offsets[block_id + 1]).step_by(SORT_SHIFT) {
+            buckets.fill(0);
+            for x in records.iter() {
+                let k = ((x.sketch & mask) >> j).to_usize().unwrap() & SORT_MASK;
+                buckets[k] += 1;
+            }
+            for k in 1..buckets.len() {
+                buckets[k] += buckets[k - 1];
+            }
+            for x in records.iter().rev() {
+                let k = ((x.sketch & mask) >> j).to_usize().unwrap() & SORT_MASK;
+                buckets[k] -= 1;
+                sorted[buckets[k]] = x.clone();
+            }
+            for i in 0..records.len() {
+                records[i] = sorted[i].clone();
+            }
+        }
     }
 
     fn collision_ranges(
