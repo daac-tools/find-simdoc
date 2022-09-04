@@ -6,6 +6,7 @@ use crate::sketch::Sketch;
 
 const SORT_SHIFT: usize = 8;
 const SORT_MASK: usize = (1 << SORT_SHIFT) - 1;
+const DEFAULT_THRESHOLD_IN_SORT: usize = 1000;
 
 #[derive(Clone, Debug, Default)]
 struct Record<S> {
@@ -21,32 +22,59 @@ pub struct MultiSort<S> {
     num_blocks: usize,
     masks: Vec<S>,
     offsets: Vec<usize>,
-    // Buffers for radix sort
+    // For radix sort
+    threshold_in_sort: usize,
     buckets: RefCell<[usize; SORT_MASK + 1]>,
     sorted: RefCell<Vec<Record<S>>>,
+}
+
+impl<S> Default for MultiSort<S>
+where
+    S: Sketch,
+{
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl<S> MultiSort<S>
 where
     S: Sketch,
 {
-    /// Reports all similar pairs whose Hamming distance is within `radius`.
-    pub fn similar_pairs(sketches: &[S], radius: usize, num_blocks: usize) -> Vec<(usize, usize)> {
-        assert!(radius <= num_blocks);
+    pub const fn new() -> Self {
+        Self {
+            radius: 0,
+            num_blocks: 0,
+            masks: vec![],
+            offsets: vec![],
+            threshold_in_sort: DEFAULT_THRESHOLD_IN_SORT,
+            buckets: RefCell::new([0usize; SORT_MASK + 1]),
+            sorted: RefCell::new(vec![]),
+        }
+    }
+
+    pub fn num_blocks(mut self, num_blocks: usize) -> Self {
         assert!(num_blocks <= S::dim());
+        self.num_blocks = num_blocks;
+        self
+    }
 
-        let (masks, offsets) = Self::build_masks_and_offsets(num_blocks);
-        let buckets = [0usize; SORT_MASK + 1];
-        let sorted = Vec::with_capacity(sketches.len());
+    pub fn threshold_in_sort(mut self, threshold_in_sort: usize) -> Self {
+        self.threshold_in_sort = threshold_in_sort;
+        self
+    }
 
-        let this = Self {
-            radius,
-            num_blocks,
-            masks,
-            offsets,
-            buckets: RefCell::new(buckets),
-            sorted: RefCell::new(sorted),
-        };
+    /// Reports all similar pairs whose Hamming distance is within `radius`.
+    pub fn similar_pairs(mut self, sketches: &[S], radius: usize) -> Vec<(usize, usize)> {
+        if self.num_blocks == 0 {
+            // Following Tabei's paper.
+            self.num_blocks = S::dim().min(radius + 3);
+        }
+        assert!(radius <= self.num_blocks);
+
+        self.build_masks_and_offsets();
+        self.radius = radius;
+        self.sorted = RefCell::new(Vec::with_capacity(sketches.len()));
 
         let mut records: Vec<_> = sketches
             .iter()
@@ -54,21 +82,22 @@ where
             .map(|(id, &sketch)| Record { id, sketch })
             .collect();
         let mut results = vec![];
-        this.similar_pairs_recur(&mut records, Bitset64::new(), &mut results);
+        self.similar_pairs_recur(&mut records, Bitset64::new(), &mut results);
         results
     }
 
-    fn build_masks_and_offsets(num_blocks: usize) -> (Vec<S>, Vec<usize>) {
-        let mut masks = vec![S::default(); num_blocks];
-        let mut offsets = vec![0; num_blocks + 1];
+    fn build_masks_and_offsets(&mut self) {
+        let mut masks = vec![S::default(); self.num_blocks];
+        let mut offsets = vec![0; self.num_blocks + 1];
         let mut i = 0;
-        for (b, mask) in masks.iter_mut().enumerate().take(num_blocks) {
-            let dim = (b + S::dim()) / num_blocks;
+        for (b, mask) in masks.iter_mut().enumerate().take(self.num_blocks) {
+            let dim = (b + S::dim()) / self.num_blocks;
             *mask = S::mask(i..i + dim);
             i += dim;
             offsets[b + 1] = i;
         }
-        (masks, offsets)
+        self.masks = masks;
+        self.offsets = offsets;
     }
 
     fn similar_pairs_recur(
@@ -130,7 +159,7 @@ where
     }
 
     fn sort_sketches(&self, block_id: usize, records: &mut [Record<S>]) {
-        if records.len() < 1_000 {
+        if records.len() < self.threshold_in_sort {
             self.quick_sort_sketches(block_id, records);
         } else {
             self.radix_sort_sketches(block_id, records);
@@ -242,7 +271,10 @@ mod tests {
     fn test_similar_pairs(radius: usize, num_blocks: usize) {
         let sketches = example_sketches();
         let expected = naive_search(&sketches, radius);
-        let mut results = MultiSort::similar_pairs(&sketches, radius, num_blocks);
+        let mut results = MultiSort::new()
+            .num_blocks(num_blocks)
+            .threshold_in_sort(5)
+            .similar_pairs(&sketches, radius);
         results.sort_unstable();
         assert_eq!(results, expected);
     }

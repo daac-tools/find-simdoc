@@ -38,7 +38,7 @@ where
                 continue;
             }
             let r = (j + hamdist + 1 - self.chunks.len()) / self.chunks.len();
-            let results = MultiSort::similar_pairs(chunk, r, S::dim().min(r + 3));
+            let results = MultiSort::new().similar_pairs(chunk, r);
             candidates.extend(results);
         }
         candidates.sort_unstable();
