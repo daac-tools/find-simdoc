@@ -99,6 +99,10 @@ where
         self.chunks.get(0).map(|v| v.len()).unwrap_or(0)
     }
 
+    pub fn memory_in_bytes(&self) -> usize {
+        self.num_chunks() * self.num_sketches() * std::mem::size_of::<S>()
+    }
+
     fn hamming_distance(&self, i: usize, j: usize) -> usize {
         let mut dist = 0;
         for chunk in &self.chunks {

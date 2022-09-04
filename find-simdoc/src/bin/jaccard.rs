@@ -85,6 +85,12 @@ where
         extractor.extract(text, &mut features);
         joiner.add(hasher.iter(&features));
     }
+    let memory_in_bytes = joiner.memory_in_bytes() as f64;
+    eprintln!(
+        "[find_in_jaccard] Produced {} sketches in {} MiB",
+        joiner.num_sketches(),
+        memory_in_bytes / (1024. * 1024.)
+    );
 
     // In 1-bit minhash, the collision probability is multiplied by 2 over the original.
     // Thus, we should search with the half of the actual radius.

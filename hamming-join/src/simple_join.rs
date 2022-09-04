@@ -73,6 +73,10 @@ where
         self.sketches.len()
     }
 
+    pub fn memory_in_bytes(&self) -> usize {
+        self.num_chunks() * self.num_sketches() * std::mem::size_of::<S>()
+    }
+
     fn hamming_distance(&self, i: usize, j: usize) -> usize {
         let xs = &self.sketches[i];
         let ys = &self.sketches[j];

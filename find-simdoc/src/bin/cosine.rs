@@ -85,5 +85,12 @@ where
         extractor.extract_with_weights(text, &mut features);
         joiner.add(hasher.iter(&features));
     }
+    let memory_in_bytes = joiner.memory_in_bytes() as f64;
+    eprintln!(
+        "[find_in_cosine] Produced {} sketches in {} MiB",
+        joiner.num_sketches(),
+        memory_in_bytes / (1024. * 1024.)
+    );
+
     joiner.similar_pairs(radius)
 }
