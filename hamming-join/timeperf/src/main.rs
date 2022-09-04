@@ -4,19 +4,15 @@ use hamming_join::chunked_join::ChunkedJoiner;
 use hamming_join::simple_join::SimpleJoiner;
 
 const TRIALS: usize = 1;
-const MIN_SKETCHES: usize = 1_000;
-const MAX_SKETCHES: usize = 1_000_000;
-const MIN_CHUNKS: usize = 1;
-const MAX_CHUNKS: usize = 4;
+const SCALES: [usize; 4] = [1_000, 10_000, 100_000, 1_000_000];
+const CHUNKS: [usize; 3] = [1, 2, 4];
 const RADII: [f64; 4] = [0.01, 0.02, 0.05, 0.1];
 
 macro_rules! timeperf_common {
-    ($percent:expr, $name:expr, $method:ident, $sketches:ident, $radii:ident) => {
-        let mut num_chunks = MIN_CHUNKS;
-        while num_chunks <= MAX_CHUNKS {
+    ($percent:expr, $name:expr, $method:ident, $sketches:ident, $radii:ident, $chunks:ident, $scales:ident) => {
+        for &num_chunks in $chunks {
             let mut joiner = $method::new(num_chunks);
-            let mut num_sketches = MIN_SKETCHES;
-            while num_sketches <= MAX_SKETCHES {
+            for &num_sketches in $scales {
                 while joiner.num_sketches() < num_sketches {
                     let sketch = &$sketches[joiner.num_sketches()];
                     joiner.add(sketch.iter().cloned());
@@ -32,9 +28,7 @@ macro_rules! timeperf_common {
                         $percent, $name
                     );
                 }
-                num_sketches *= 10;
             }
-            num_chunks *= 2;
         }
     };
 }
@@ -45,10 +39,13 @@ fn main() {
 }
 
 fn main_percent(percent: u64) {
-    let mut sketches = Vec::with_capacity(MAX_SKETCHES);
-    for _ in 0..MAX_SKETCHES {
-        let mut chunks = Vec::with_capacity(MAX_CHUNKS);
-        for _ in 0..MAX_CHUNKS {
+    let max_chunks = *CHUNKS.last().unwrap();
+    let max_sketches = *SCALES.last().unwrap();
+
+    let mut sketches = Vec::with_capacity(max_sketches);
+    for _ in 0..max_sketches {
+        let mut chunks = Vec::with_capacity(max_chunks);
+        for _ in 0..max_chunks {
             chunks.push((0..64).fold(0u64, |acc, _| {
                 let x = rand::random::<u64>() & 100;
                 (acc << 1) | ((x < percent) as u64)
@@ -58,11 +55,31 @@ fn main_percent(percent: u64) {
     }
     {
         let radii = &RADII[..1];
-        timeperf_common!(percent, "simple_join", SimpleJoiner, sketches, radii);
+        let chunks = &CHUNKS[..];
+        let scales = &SCALES[..3];
+        timeperf_common!(
+            percent,
+            "simple_join",
+            SimpleJoiner,
+            sketches,
+            radii,
+            chunks,
+            scales
+        );
     }
     {
         let radii = &RADII[..];
-        timeperf_common!(percent, "chunked_join", ChunkedJoiner, sketches, radii);
+        let chunks = &CHUNKS[..];
+        let scales = &SCALES[..];
+        timeperf_common!(
+            percent,
+            "chunked_join",
+            ChunkedJoiner,
+            sketches,
+            radii,
+            chunks,
+            scales
+        );
     }
 }
 
