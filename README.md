@@ -54,6 +54,10 @@ for quickly finding all pairs of similar sketches.
 #### In the Jaccard space
 
 ```
+$ cargo run --release -p find-simdoc --bin jaccard -- --help
+```
+
+```
 $ cargo run --release -p find-simdoc --bin jaccard -- -i reuters.txt -r 0.1 -w 5 > result-jaccard.csv
 ```
 

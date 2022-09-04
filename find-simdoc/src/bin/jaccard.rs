@@ -15,21 +15,30 @@ use rand::{RngCore, SeedableRng};
     about = "A program to find similar documents in the Jaccard space."
 )]
 struct Args {
+    /// File path to a document file to be searched.
     #[clap(short = 'i', long)]
-    text_path: PathBuf,
+    document_path: PathBuf,
 
+    /// Search radius in the range of [0,1].
     #[clap(short = 'r', long)]
     radius: f64,
 
+    /// Delimiter for recognizing words as tokens in feature extraction.
+    /// If None, characters are used for tokens.
     #[clap(short = 'd', long)]
     delimiter: Option<char>,
 
-    #[clap(short = 'w', long)]
+    /// Window size for w-shingling in feature extraction (must to be more than 0).
+    #[clap(short = 'w', long, default_value = "1")]
     window_size: usize,
 
+    /// Number of chunks in sketches, indicating that the number of dimensions in the Hamming space
+    /// will be 64*#chunks. The larger this value, the more accurate the approximation,
+    /// but the more time and memory it takes to search.
     #[clap(short = 'c', long, default_value = "8")]
     num_chunks: usize,
 
+    /// Seed value for random values.
     #[clap(short = 's', long)]
     seed: Option<u64>,
 }
@@ -37,14 +46,16 @@ struct Args {
 fn main() -> Result<(), Box<dyn Error>> {
     let args = Args::parse();
 
-    let text_path = args.text_path;
+    let document_path = args.document_path;
     let radius = args.radius;
     let delimiter = args.delimiter;
     let window_size = args.window_size;
     let num_chunks = args.num_chunks;
     let seed = args.seed;
 
-    let texts = BufReader::new(File::open(text_path)?)
+    assert_ne!(window_size, 0);
+
+    let texts = BufReader::new(File::open(document_path)?)
         .lines()
         .map(|line| line.unwrap());
 
