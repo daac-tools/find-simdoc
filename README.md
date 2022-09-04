@@ -13,3 +13,8 @@ cargo run --release -p find-simdoc --bin cosine -- -i data/sample.txt -r 0.1 -w 
 cargo run --release -p find-simdoc --bin dump -- -i data/sample.txt -s jac.csv
 cargo run --release -p find-simdoc --bin dump -- -i data/sample.txt -s cos.csv
 ```
+
+## TODO
+
+- Add threading for chunked_join
+- Add TF-IDF weights
