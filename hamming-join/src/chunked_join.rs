@@ -41,7 +41,7 @@ where
             );
         }
 
-        // Can be threaded.
+        // TODO: Threading.
         let mut candidates = vec![];
         for (j, chunk) in self.chunks.iter().enumerate() {
             // Based on the general pigeonhole principle.
