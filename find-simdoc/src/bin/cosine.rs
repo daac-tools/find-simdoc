@@ -75,7 +75,7 @@ where
 {
     let hasher = SimHasher::new(seed);
     let mut extractor = FeatureExtractor::new(config);
-    let mut joiner = ChunkedJoiner::<u64>::new(num_chunks);
+    let mut joiner = ChunkedJoiner::<u64>::new(num_chunks).shows_progress(true);
 
     let mut features = vec![];
     for text in texts {

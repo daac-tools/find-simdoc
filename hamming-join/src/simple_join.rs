@@ -3,6 +3,7 @@ use crate::sketch::Sketch;
 pub struct SimpleJoiner<S> {
     sketches: Vec<Vec<S>>,
     num_chunks: usize,
+    shows_progress: bool,
 }
 
 impl<S> SimpleJoiner<S>
@@ -13,7 +14,13 @@ where
         Self {
             sketches: vec![],
             num_chunks,
+            shows_progress: false,
         }
+    }
+
+    pub fn shows_progress(mut self, yes: bool) -> Self {
+        self.shows_progress = yes;
+        self
     }
 
     pub fn add<I>(&mut self, sketch: I)
@@ -30,8 +37,19 @@ where
 
     pub fn similar_pairs(&self, radius: f64) -> Vec<(usize, usize, f64)> {
         let dimension = S::dim() * self.num_chunks();
+        if self.shows_progress {
+            eprintln!("[SimpleJoiner::similar_pairs] #dimensions={dimension}");
+        }
+
         let mut matched = vec![];
         for i in 0..self.sketches.len() {
+            if self.shows_progress && (i + 1) % 100 == 0 {
+                eprintln!(
+                    "[SimpleJoiner::similar_pairs] Processed {}/{}...",
+                    i + 1,
+                    self.sketches.len()
+                );
+            }
             for j in i + 1..self.sketches.len() {
                 let dist = self.hamming_distance(i, j);
                 let dist = dist as f64 / dimension as f64;
@@ -39,6 +57,9 @@ where
                     matched.push((i, j, dist));
                 }
             }
+        }
+        if self.shows_progress {
+            eprintln!("[SimpleJoiner::similar_pairs] Done");
         }
         matched
     }

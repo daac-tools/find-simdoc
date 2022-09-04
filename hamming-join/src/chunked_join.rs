@@ -3,6 +3,7 @@ use crate::sketch::Sketch;
 
 pub struct ChunkedJoiner<S> {
     chunks: Vec<Vec<S>>,
+    shows_progress: bool,
 }
 
 impl<S> ChunkedJoiner<S>
@@ -12,7 +13,13 @@ where
     pub fn new(num_chunks: usize) -> Self {
         Self {
             chunks: vec![vec![]; num_chunks],
+            shows_progress: false,
         }
+    }
+
+    pub fn shows_progress(mut self, yes: bool) -> Self {
+        self.shows_progress = yes;
+        self
     }
 
     pub fn add<I>(&mut self, sketch: I)
@@ -27,23 +34,48 @@ where
 
     pub fn similar_pairs(&self, radius: f64) -> Vec<(usize, usize, f64)> {
         let dimension = S::dim() * self.num_chunks();
-        let hamdist = (dimension as f64 * radius).ceil() as usize;
-        // println!("dimension={dimension}, hamdist={hamdist}");
+        let hamradius = (dimension as f64 * radius).ceil() as usize;
+        if self.shows_progress {
+            eprintln!(
+                "[ChunkedJoiner::similar_pairs] #dimensions={dimension}, hamradius={hamradius}"
+            );
+        }
 
         // Can be threaded.
         let mut candidates = vec![];
         for (j, chunk) in self.chunks.iter().enumerate() {
             // Based on the general pigeonhole principle.
-            if j + hamdist + 1 < self.chunks.len() {
+            if j + hamradius + 1 < self.chunks.len() {
                 continue;
             }
-            let r = (j + hamdist + 1 - self.chunks.len()) / self.chunks.len();
+            let r = (j + hamradius + 1 - self.chunks.len()) / self.chunks.len();
             let results = MultiSort::new().similar_pairs(chunk, r);
             candidates.extend(results);
+
+            if self.shows_progress {
+                eprintln!(
+                    "[ChunkedJoiner::similar_pairs] Processed {}/{}...",
+                    j + 1,
+                    self.chunks.len()
+                );
+                eprintln!(
+                    "[ChunkedJoiner::similar_pairs] #non-unique-candidates={}",
+                    candidates.len()
+                );
+            }
         }
+        if self.shows_progress {
+            eprintln!("[ChunkedJoiner::similar_pairs] Done");
+        }
+
         candidates.sort_unstable();
         candidates.dedup();
-        // println!("#candidates={}", candidates.len());
+        if self.shows_progress {
+            eprintln!(
+                "[ChunkedJoiner::similar_pairs] #unique-candidates={}",
+                candidates.len()
+            );
+        }
 
         let mut matched = vec![];
         for (i, j) in candidates {
