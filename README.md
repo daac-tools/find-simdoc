@@ -143,7 +143,6 @@ he forecast the chancellor ' s budget tax cuts would increase consumer expenditu
 
 ## TODO
 
-- Add error handling
 - Add threading for `chunked_join`
 - Add TF-IDF weighting
 - Add tools to evaluate accuracy of minhash
