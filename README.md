@@ -1,6 +1,6 @@
 # Finding similar documents
 
-This is software for quickly finding all pairs of similar documents.
+This software provides fast all-pair similarity searches in a document file.
 
 ## Example of finding similar sentences
 
@@ -9,9 +9,9 @@ First of all, install `rustc` and `cargo` following the [official instructions](
 
 ### 1. Data preparation
 
-You can prepare the document file used in this example using `scripts/load_nltk_sents.py`.
-From the Reuters Corpus provided by NLTK, you can produce line-separated sentences
-with the following command.
+You have to prepare a document file containing search sentences line by line.
+
+Here, from the Reuters Corpus provided by NLTK, you can produce the document file used throughout this example, with the following command.
 
 ```
 $ ./scripts/load_nltk_sents.py reuters
@@ -35,8 +35,8 @@ the resulting association will operate under the name of charter and will be bas
 
 ### 2. Finding all pairs of similar sentences
 
-The workspace `find-simdoc` provides CLI tools for fast all-pair similar searches in a document file.
-The approach consists of the three steps:
+The workspace `find-simdoc` provides CLI tools for fast all-pair similarity searches in a document file.
+The approach consists of three steps:
 
 1. Extract features from sentences
    - Set representation of character $q$-grams
@@ -44,22 +44,28 @@ The approach consists of the three steps:
 2. Convert the features into binary sketches through LSH
    - [1-bit minwise hashing](https://arxiv.org/abs/0910.3349) for the Jaccard similarity
    - [Simplified simhash](https://dl.acm.org/doi/10.1145/1242572.1242592) for the Cosine similarity
-3. Search for similar sketches using the [chunked multiple sorting approach](https://proceedings.mlr.press/v13/tabei10a.html)
+3. Search for similar sketches using a modified variant of the [sketch sorting approach](https://proceedings.mlr.press/v13/tabei10a.html)
 
-In Step 1, the current version supports only set representations.
-Supporting weighting approaches such as TFIDF is the future work.
-In Step 3, we employ a modified variant of the [chunked multiple sorting approach](https://proceedings.mlr.press/v13/tabei10a.html)
-for quickly finding all pairs of similar sketches.
+Note that the current version supports only set representations in Step 1.
+Supporting weighting approaches such as TF-IDF is the future work.
 
 #### In the Jaccard space
+
+The executable `jaccard` provides a similarity search in the [Jaccard space](https://en.wikipedia.org/wiki/Jaccard_index).
+You can check the arguments with the following command.
 
 ```
 $ cargo run --release -p find-simdoc --bin jaccard -- --help
 ```
 
+If you want to find similar sentences in `reuters.txt` within search radius `0.1` for tokens of
+character `5`-grams, run the following command.
+
 ```
 $ cargo run --release -p find-simdoc --bin jaccard -- -i reuters.txt -r 0.1 -w 5 > result-jaccard.csv
 ```
+
+Pairs of similar sentences (indicated by line numbers) and their distances are reported.
 
 ```
 $ head result-jaccard.csv
@@ -77,9 +83,21 @@ i,j,dist
 
 #### In the Cosine space
 
+The executable `cosine` provides a similarity search in the [Cosine space](https://en.wikipedia.org/wiki/Cosine_similarity).
+You can check the arguments with the following command.
+
+```
+$ cargo run --release -p find-simdoc --bin cosine -- --help
+```
+
+If you want to find similar sentences in `reuters.txt` within search radius `0.15` for tokens of
+word `3`-grams (separated by a space), run the following command.
+
 ```
 $ cargo run --release -p find-simdoc --bin cosine -- -i reuters.txt -r 0.15 -d " " -w 3 > result-cosine.csv
 ```
+
+Pairs of similar sentences (indicated by line numbers) and their distances are reported.
 
 ```
 $ head result-cosine.csv
@@ -96,6 +114,11 @@ i,j,dist
 ```
 
 ### 3. Printing similar sentences
+
+The executable `dump` prints similar sentences from an output CSV file.
+
+If you want to print similar sentences in `reuters.txt` with the result `result-jaccard.csv`,
+run the following command.
 
 ```
 $ cargo run --release -p find-simdoc --bin dump -- -i reuters.txt -s result-jaccard.csv
@@ -119,6 +142,7 @@ he forecast the chancellor ' s budget tax cuts would increase consumer expenditu
 
 ## TODO
 
-- Add threading for chunked_join
-- Add TF-IDF weights
-- Add a tool to evaluate accuracy of minhash
+- Add threading for `chunked_join`
+- Add TF-IDF weighting
+- Add tools to evaluate accuracy of minhash
+- Derive the complexity
