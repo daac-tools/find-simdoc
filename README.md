@@ -11,7 +11,7 @@ First of all, install `rustc` and `cargo` following the [official instructions](
 
 You have to prepare a document file containing search sentences line by line.
 
-Here, from the Reuters Corpus provided by NLTK, you can produce the document file used throughout this example, with the following command.
+From the Reuters Corpus provided by NLTK, you can produce the document file used throughout this example, with the following command.
 
 ```
 $ ./scripts/load_nltk_sents.py reuters
