@@ -42,7 +42,7 @@ The approach consists of three steps:
 1. Extract features from sentences
    - Set representation of character q-grams
    - Set representation of word q-grams
-2. Convert the features into binary sketches through LSH
+2. Convert the features into binary sketches through locality sensitive hashing (LSH)
    - [1-bit minwise hashing](https://arxiv.org/abs/0910.3349) for the Jaccard similarity
    - [Simplified simhash](https://dl.acm.org/doi/10.1145/1242572.1242592) for the Cosine similarity
 3. Search for similar sketches using a modified variant of the [sketch sorting approach](https://proceedings.mlr.press/v13/tabei10a.html)
@@ -143,10 +143,18 @@ he forecast the chancellor ' s budget tax cuts would increase consumer expenditu
 
 ### 4. Testing the accuracy of 1-bit minwise hashing
 
+LSH is an approximate solution, and you may want to know the accuracy.
+
+The executable `minhash_mae` allows you to examine the *mean absolute error (MAE)*,
+the averaged gap between the normalized Hamming distance with the minwise hashing
+and the actual Jaccard distance.
+
+To use this executable, we recommend extracting a small subset from your dataset
+because it computes distances for all possible pairs.
+
 ```
 $ head -5000 reuters.txt > reuters.5k.txt
 ```
-
 
 ```
 $ cargo run --release -p find-simdoc --bin minhash_mae -- -i reuters.5k.txt -w 5 > mae.csv
