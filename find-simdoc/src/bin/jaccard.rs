@@ -88,7 +88,7 @@ where
     let mut extractor = FeatureExtractor::new(config);
     let mut joiner = ChunkedJoiner::<u64>::new(num_chunks).shows_progress(true);
 
-    eprintln!("[find_in_jaccard] Converting texts into sketches...");
+    eprintln!("Converting texts into sketches...");
     let mut feature = vec![];
     for text in texts {
         let text = text.as_ref();
@@ -98,7 +98,7 @@ where
     }
     let memory_in_bytes = joiner.memory_in_bytes() as f64;
     eprintln!(
-        "[find_in_jaccard] Produced {} sketches in {} MiB",
+        "Produced {} sketches in {} MiB",
         joiner.num_sketches(),
         memory_in_bytes / (1024. * 1024.)
     );
