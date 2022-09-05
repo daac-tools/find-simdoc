@@ -18,6 +18,7 @@ $ ./scripts/load_nltk_sents.py reuters
 ```
 
 `reuters.txt` will be output.
+Note that, since lines are shuffled to deduplicate sentences, your file will not be the identical to the following example.
 
 ```
 $ head reuters.txt
@@ -39,8 +40,8 @@ The workspace `find-simdoc` provides CLI tools for fast all-pair similarity sear
 The approach consists of three steps:
 
 1. Extract features from sentences
-   - Set representation of character $q$-grams
-   - Set representation of word $q$-grams
+   - Set representation of character q-grams
+   - Set representation of word q-grams
 2. Convert the features into binary sketches through LSH
    - [1-bit minwise hashing](https://arxiv.org/abs/0910.3349) for the Jaccard similarity
    - [Simplified simhash](https://dl.acm.org/doi/10.1145/1242572.1242592) for the Cosine similarity
@@ -142,6 +143,7 @@ he forecast the chancellor ' s budget tax cuts would increase consumer expenditu
 
 ## TODO
 
+- Add error handling
 - Add threading for `chunked_join`
 - Add TF-IDF weighting
 - Add tools to evaluate accuracy of minhash
