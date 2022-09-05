@@ -89,12 +89,12 @@ where
     let mut joiner = ChunkedJoiner::<u64>::new(num_chunks).shows_progress(true);
 
     eprintln!("[find_in_cosine] Converting texts into sketches...");
-    let mut features = vec![];
+    let mut feature = vec![];
     for text in texts {
         let text = text.as_ref();
         assert!(!text.is_empty());
-        extractor.extract_with_weights(text, &mut features);
-        joiner.add(hasher.iter(&features))?;
+        extractor.extract_with_weights(text, &mut feature);
+        joiner.add(hasher.iter(&feature))?;
     }
     let memory_in_bytes = joiner.memory_in_bytes() as f64;
     eprintln!(

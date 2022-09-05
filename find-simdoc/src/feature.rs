@@ -48,44 +48,44 @@ impl FeatureExtractor {
         }
     }
 
-    pub fn extract<S>(&mut self, text: S, features: &mut Vec<u64>)
+    pub fn extract<S>(&mut self, text: S, feature: &mut Vec<u64>)
     where
         S: AsRef<str>,
     {
         let text = text.as_ref();
 
-        features.clear();
+        feature.clear();
         if self.config.delimiter.is_none() && self.config.window_size == 1 {
             // The simplest case.
-            text.chars().for_each(|c| features.push(c as u64));
+            text.chars().for_each(|c| feature.push(c as u64));
         } else {
             self.tokenize(text);
             for ranges in ShingleIter::new(&self.token_ranges, self.config.window_size) {
-                features.push(self.config.hash(ranges.iter().cloned().map(|r| &text[r])));
+                feature.push(self.config.hash(ranges.iter().cloned().map(|r| &text[r])));
             }
         }
     }
 
-    pub fn extract_with_weights<S>(&mut self, text: S, features: &mut Vec<(u64, f64)>)
+    pub fn extract_with_weights<S>(&mut self, text: S, feature: &mut Vec<(u64, f64)>)
     where
         S: AsRef<str>,
     {
         let text = text.as_ref();
 
-        features.clear();
+        feature.clear();
         if self.config.delimiter.is_none() && self.config.window_size == 1 {
             // The simplest case.
             text.chars().for_each(|c| {
                 let f = c as u64;
                 let w = 1.;
-                features.push((f, w))
+                feature.push((f, w))
             });
         } else {
             self.tokenize(text);
             for ranges in ShingleIter::new(&self.token_ranges, self.config.window_size) {
                 let f = self.config.hash(ranges.iter().cloned().map(|r| &text[r]));
                 let w = 1.;
-                features.push((f, w))
+                feature.push((f, w))
             }
         }
     }
@@ -125,11 +125,11 @@ mod tests {
         let mut extractor = FeatureExtractor::new(config);
 
         let text = "abcd";
-        let mut features = vec![];
+        let mut feature = vec![];
 
-        extractor.extract(text, &mut features);
+        extractor.extract(text, &mut feature);
         assert_eq!(
-            features,
+            feature,
             vec!['a' as u64, 'b' as u64, 'c' as u64, 'd' as u64]
         )
     }
@@ -140,11 +140,11 @@ mod tests {
         let mut extractor = FeatureExtractor::new(config);
 
         let text = "abcd";
-        let mut features = vec![];
+        let mut feature = vec![];
 
-        extractor.extract(text, &mut features);
+        extractor.extract(text, &mut feature);
         assert_eq!(
-            features,
+            feature,
             vec![
                 config.hash(&["a", "b"]),
                 config.hash(&["b", "c"]),
@@ -159,11 +159,11 @@ mod tests {
         let mut extractor = FeatureExtractor::new(config);
 
         let text = "abcd";
-        let mut features = vec![];
+        let mut feature = vec![];
 
-        extractor.extract(text, &mut features);
+        extractor.extract(text, &mut feature);
         assert_eq!(
-            features,
+            feature,
             vec![config.hash(&["a", "b", "c"]), config.hash(&["b", "c", "d"]),]
         )
     }
@@ -174,11 +174,11 @@ mod tests {
         let mut extractor = FeatureExtractor::new(config);
 
         let text = "abc de fgh";
-        let mut features = vec![];
+        let mut feature = vec![];
 
-        extractor.extract(text, &mut features);
+        extractor.extract(text, &mut feature);
         assert_eq!(
-            features,
+            feature,
             vec![
                 config.hash(&["abc"]),
                 config.hash(&["de"]),
@@ -193,11 +193,11 @@ mod tests {
         let mut extractor = FeatureExtractor::new(config);
 
         let text = "abc de fgh";
-        let mut features = vec![];
+        let mut feature = vec![];
 
-        extractor.extract(text, &mut features);
+        extractor.extract(text, &mut feature);
         assert_eq!(
-            features,
+            feature,
             vec![config.hash(&["abc", "de"]), config.hash(&["de", "fgh"]),]
         )
     }
@@ -208,9 +208,9 @@ mod tests {
         let mut extractor = FeatureExtractor::new(config);
 
         let text = "abc de fgh";
-        let mut features = vec![];
+        let mut feature = vec![];
 
-        extractor.extract(text, &mut features);
-        assert_eq!(features, vec![config.hash(&["abc", "de", "fgh"])])
+        extractor.extract(text, &mut feature);
+        assert_eq!(feature, vec![config.hash(&["abc", "de", "fgh"])])
     }
 }
