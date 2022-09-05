@@ -141,9 +141,33 @@ he forecast the chancellor ' s budget tax cuts would increase consumer expenditu
 ...
 ```
 
+### 4. Testing the accuracy of 1-bit minwise hashing
+
+```
+$ head -5000 reuters.txt > reuters.5k.txt
+```
+
+
+```
+$ cargo run --release -p find-simdoc --bin minhash_mae -- -i reuters.5k.txt -w 5 > mae.csv
+```
+
+```
+$ cat mae.csv
+num_chunks,dimensions,mean_absolute_error
+1,64,0.09974628492462442
+2,128,0.07050781338677266
+3,192,0.05761297836012548
+4,256,0.049865352075419325
+...
+97,6208,0.010101573974127143
+98,6272,0.010049751534166197
+99,6336,0.009999685515430031
+100,6400,0.009950974569090776
+```
+
 ## TODO
 
 - Add threading for `chunked_join`
 - Add TF-IDF weighting
-- Add tools to evaluate accuracy of minhash
 - Derive the complexity

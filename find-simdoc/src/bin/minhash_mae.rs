@@ -12,7 +12,7 @@ use rand::{RngCore, SeedableRng};
 #[derive(Parser, Debug)]
 #[clap(
     name = "find-simdoc-minhash_mae",
-    about = "A program to find similar documents in the Jaccard space."
+    about = "A program to test mean absolute errors in 1-bit minwise hashing."
 )]
 struct Args {
     /// File path to a document file to be searched.

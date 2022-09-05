@@ -88,9 +88,12 @@ where
     let mut extractor = FeatureExtractor::new(config);
     let mut joiner = ChunkedJoiner::<u64>::new(num_chunks).shows_progress(true);
 
-    eprintln!("Converting texts into sketches...");
+    eprintln!("Converting sentences into sketches...");
     let mut feature = vec![];
-    for text in texts {
+    for (i, text) in texts.enumerate() {
+        if (i + 1) % 1000 == 0 {
+            eprintln!("Processed {} sentences...", i + 1);
+        }
         let text = text.as_ref();
         assert!(!text.is_empty());
         extractor.extract(text, &mut feature);
