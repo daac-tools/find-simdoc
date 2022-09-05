@@ -63,7 +63,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         rand_xoshiro::SplitMix64::seed_from_u64(seed.unwrap_or_else(rand::random::<u64>));
 
     let config = FeatureConfig::new(window_size, delimiter, seeder.next_u64());
-    let results = find_in_jaccard(texts, radius, num_chunks, seeder.next_u64(), config);
+    let results = find_in_jaccard(texts, radius, num_chunks, seeder.next_u64(), config)?;
 
     println!("i,j,dist");
     for (i, j, dist) in results {
@@ -79,7 +79,7 @@ fn find_in_jaccard<I, S>(
     num_chunks: usize,
     seed: u64,
     config: FeatureConfig,
-) -> Vec<(usize, usize, f64)>
+) -> Result<Vec<(usize, usize, f64)>, Box<dyn Error>>
 where
     I: Iterator<Item = S>,
     S: AsRef<str>,
@@ -94,7 +94,7 @@ where
         let text = text.as_ref();
         assert!(!text.is_empty());
         extractor.extract(text, &mut features);
-        joiner.add(hasher.iter(&features));
+        joiner.add(hasher.iter(&features))?;
     }
     let memory_in_bytes = joiner.memory_in_bytes() as f64;
     eprintln!(
@@ -109,5 +109,5 @@ where
 
     // Modifies the distances.
     results.iter_mut().for_each(|(_, _, d)| *d *= 2.);
-    results
+    Ok(results)
 }

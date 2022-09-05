@@ -15,7 +15,7 @@ macro_rules! timeperf_common {
             for &num_sketches in $scales {
                 while joiner.num_sketches() < num_sketches {
                     let sketch = &$sketches[joiner.num_sketches()];
-                    joiner.add(sketch.iter().cloned());
+                    joiner.add(sketch.iter().cloned()).unwrap();
                 }
                 for &radius in $radii {
                     let mut num_results = 0;

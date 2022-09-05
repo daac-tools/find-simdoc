@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 num-traits = "0.2.15"
+anyhow = "=1.0.62"

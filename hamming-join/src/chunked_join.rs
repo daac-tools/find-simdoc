@@ -1,3 +1,5 @@
+use anyhow::{anyhow, Result};
+
 use crate::multi_sort::MultiSort;
 use crate::sketch::Sketch;
 
@@ -22,14 +24,18 @@ where
         self
     }
 
-    pub fn add<I>(&mut self, sketch: I)
+    pub fn add<I>(&mut self, sketch: I) -> Result<()>
     where
         I: IntoIterator<Item = S>,
     {
+        let num_chunks = self.num_chunks();
         let mut iter = sketch.into_iter();
-        self.chunks
-            .iter_mut()
-            .for_each(|chunk| chunk.push(iter.next().unwrap()));
+        for chunk in self.chunks.iter_mut() {
+            chunk.push(iter.next().ok_or(anyhow!(
+                "The input sketch must include {num_chunks} chunks at least."
+            ))?);
+        }
+        Ok(())
     }
 
     pub fn similar_pairs(&self, radius: f64) -> Vec<(usize, usize, f64)> {
@@ -153,7 +159,7 @@ mod tests {
 
         let mut joiner = ChunkedJoiner::new(2);
         for s in sketches {
-            joiner.add([(s & 0xFF) as u8, (s >> 8) as u8]);
+            joiner.add([(s & 0xFF) as u8, (s >> 8) as u8]).unwrap();
         }
         let mut results = joiner.similar_pairs(radius);
         results.sort_by_key(|&(i, j, _)| (i, j));
@@ -165,5 +171,12 @@ mod tests {
         for radius in 0..=10 {
             test_similar_pairs(radius as f64 / 10.);
         }
+    }
+
+    #[test]
+    fn test_short_sketch() {
+        let mut joiner = ChunkedJoiner::new(2);
+        let result = joiner.add([0u64]);
+        assert!(result.is_err());
     }
 }

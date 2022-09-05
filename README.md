@@ -11,13 +11,14 @@ First of all, install `rustc` and `cargo` following the [official instructions](
 
 You have to prepare a document file containing search sentences line by line.
 
-Here, from the Reuters Corpus provided by NLTK, you can produce the document file used throughout this example, with the following command.
+From the Reuters Corpus provided by NLTK, you can produce the document file used throughout this example, with the following command.
 
 ```
 $ ./scripts/load_nltk_sents.py reuters
 ```
 
 `reuters.txt` will be output.
+Note that, since lines are shuffled to deduplicate sentences, your file will not be the identical to the following example.
 
 ```
 $ head reuters.txt
@@ -39,8 +40,8 @@ The workspace `find-simdoc` provides CLI tools for fast all-pair similarity sear
 The approach consists of three steps:
 
 1. Extract features from sentences
-   - Set representation of character $q$-grams
-   - Set representation of word $q$-grams
+   - Set representation of character q-grams
+   - Set representation of word q-grams
 2. Convert the features into binary sketches through LSH
    - [1-bit minwise hashing](https://arxiv.org/abs/0910.3349) for the Jaccard similarity
    - [Simplified simhash](https://dl.acm.org/doi/10.1145/1242572.1242592) for the Cosine similarity
