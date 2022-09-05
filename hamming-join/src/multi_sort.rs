@@ -54,8 +54,9 @@ where
     }
 
     pub fn num_blocks(mut self, num_blocks: usize) -> Self {
-        assert!(num_blocks <= S::dim());
-        self.num_blocks = num_blocks;
+        if num_blocks <= S::dim() {
+            self.num_blocks = num_blocks;
+        }
         self
     }
 
@@ -66,11 +67,10 @@ where
 
     /// Reports all similar pairs whose Hamming distance is within `radius`.
     pub fn similar_pairs(mut self, sketches: &[S], radius: usize) -> Vec<(usize, usize)> {
-        if self.num_blocks == 0 {
+        if self.num_blocks == 0 || self.num_blocks < radius {
             // Following Tabei's paper.
             self.num_blocks = S::dim().min(radius + 3);
         }
-        assert!(radius <= self.num_blocks);
 
         self.build_masks_and_offsets();
         self.radius = radius;

@@ -1,3 +1,5 @@
+use anyhow::{anyhow, Result};
+
 use crate::sketch::Sketch;
 
 pub struct SimpleJoiner<S> {
@@ -23,16 +25,20 @@ where
         self
     }
 
-    pub fn add<I>(&mut self, sketch: I)
+    pub fn add<I>(&mut self, sketch: I) -> Result<()>
     where
         I: IntoIterator<Item = S>,
     {
         let mut iter = sketch.into_iter();
         let mut sketch = Vec::with_capacity(self.num_chunks());
         for _ in 0..self.num_chunks() {
-            sketch.push(iter.next().unwrap())
+            sketch.push(iter.next().ok_or(anyhow!(
+                "The input sketch must include {} chunks at least.",
+                self.num_chunks()
+            ))?)
         }
         self.sketches.push(sketch);
+        Ok(())
     }
 
     pub fn similar_pairs(&self, radius: f64) -> Vec<(usize, usize, f64)> {
@@ -129,7 +135,7 @@ mod tests {
 
         let mut joiner = SimpleJoiner::new(2);
         for s in sketches {
-            joiner.add([(s & 0xFF) as u8, (s >> 8) as u8]);
+            joiner.add([(s & 0xFF) as u8, (s >> 8) as u8]).unwrap();
         }
         let results = joiner.similar_pairs(radius);
         assert_eq!(results, expected);
@@ -140,5 +146,12 @@ mod tests {
         for radius in 0..=10 {
             test_similar_pairs(radius as f64 / 10.);
         }
+    }
+
+    #[test]
+    fn test_short_sketch() {
+        let mut joiner = SimpleJoiner::new(2);
+        let result = joiner.add([0u64]);
+        assert!(result.is_err());
     }
 }
