@@ -14,16 +14,16 @@ impl MinHasher {
         Self { seed }
     }
 
-    pub fn iter<'a>(&self, feats: &'a [u64]) -> MinHashIter<'a> {
+    pub fn iter<'a>(&self, feature: &'a [u64]) -> MinHashIter<'a> {
         MinHashIter {
-            feats,
+            feature,
             seeder: rand_xoshiro::SplitMix64::seed_from_u64(self.seed),
         }
     }
 }
 
 pub struct MinHashIter<'a> {
-    feats: &'a [u64],
+    feature: &'a [u64],
     seeder: rand_xoshiro::SplitMix64,
 }
 
@@ -35,7 +35,7 @@ impl<'a> Iterator for MinHashIter<'a> {
         for _ in 0..64 {
             let seed = self.seeder.next_u64();
             let h = self
-                .feats
+                .feature
                 .iter()
                 .map(|&i| crate::hash_u64(i, seed))
                 .min()

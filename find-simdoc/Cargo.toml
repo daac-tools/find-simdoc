@@ -24,3 +24,7 @@ path = "src/bin/cosine.rs"
 [[bin]]
 name = "dump"
 path = "src/bin/dump.rs"
+
+[[bin]]
+name = "minhash_mae"
+path = "src/bin/minhash_mae.rs"
