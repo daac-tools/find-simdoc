@@ -42,7 +42,7 @@ The approach consists of three steps:
 1. Extract features from sentences
    - Set representation of character q-grams
    - Set representation of word q-grams
-2. Convert the features into binary sketches through LSH
+2. Convert the features into binary sketches through locality sensitive hashing (LSH)
    - [1-bit minwise hashing](https://arxiv.org/abs/0910.3349) for the Jaccard similarity
    - [Simplified simhash](https://dl.acm.org/doi/10.1145/1242572.1242592) for the Cosine similarity
 3. Search for similar sketches using a modified variant of the [sketch sorting approach](https://proceedings.mlr.press/v13/tabei10a.html)
@@ -50,7 +50,7 @@ The approach consists of three steps:
 Note that the current version supports only set representations in Step 1.
 Supporting weighting approaches such as TF-IDF is the future work.
 
-#### In the Jaccard space
+#### Jaccard space
 
 The executable `jaccard` provides a similarity search in the [Jaccard space](https://en.wikipedia.org/wiki/Jaccard_index).
 You can check the arguments with the following command.
@@ -82,7 +82,7 @@ i,j,dist
 1250,43620,0.09765625
 ```
 
-#### In the Cosine space
+#### Cosine space
 
 The executable `cosine` provides a similarity search in the [Cosine space](https://en.wikipedia.org/wiki/Cosine_similarity).
 You can check the arguments with the following command.
@@ -141,9 +141,48 @@ he forecast the chancellor ' s budget tax cuts would increase consumer expenditu
 ...
 ```
 
+### 4. Testing the accuracy of 1-bit minwise hashing
+
+LSH is an approximate solution, and you may want to know the accuracy.
+The executable `minhash_mae` allows you to examine the *mean absolute error (MAE)*,
+the averaged gap between the normalized Hamming distance with the minwise hashing
+and the actual Jaccard distance.
+
+To use this executable, we recommend extracting a small subset from your dataset
+because it exactly computes distances for all possible pairs.
+
+```
+$ head -5000 reuters.txt > reuters.5k.txt
+```
+
+You can examine MAEs for the number of dimensions of sketches from 64 to 6400
+(i.e., the number of chunks from 1 to 100)
+with the following command.
+The parameters for feature extraction is the same as those of `jaccard`.
+
+```
+$ cargo run --release -p find-simdoc --bin minhash_mae -- -i reuters.5k.txt -w 5 > mae.csv
+```
+
+The MAEs will be reported as follows.
+It can be seen that the accuracy improves as the number of dimensions increases.
+
+```
+$ cat mae.csv
+num_chunks,dimensions,mean_absolute_error
+1,64,0.09974628492462442
+2,128,0.07050781338677266
+3,192,0.05761297836012548
+4,256,0.049865352075419325
+...
+97,6208,0.010101573974127143
+98,6272,0.010049751534166197
+99,6336,0.009999685515430031
+100,6400,0.009950974569090776
+```
+
 ## TODO
 
 - Add threading for `chunked_join`
 - Add TF-IDF weighting
-- Add tools to evaluate accuracy of minhash
 - Derive the complexity

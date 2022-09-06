@@ -14,9 +14,9 @@ impl SimHasher {
         Self { seed }
     }
 
-    pub fn iter<'a>(&self, feats: &'a [(u64, f64)]) -> SimHashIter<'a> {
+    pub fn iter<'a>(&self, feature: &'a [(u64, f64)]) -> SimHashIter<'a> {
         SimHashIter {
-            feats,
+            feature,
             seeder: rand_xoshiro::SplitMix64::seed_from_u64(self.seed),
             weights: [0.; 64],
         }
@@ -24,7 +24,7 @@ impl SimHasher {
 }
 
 pub struct SimHashIter<'a> {
-    feats: &'a [(u64, f64)],
+    feature: &'a [(u64, f64)],
     seeder: rand_xoshiro::SplitMix64,
     weights: [f64; 64],
 }
@@ -36,7 +36,7 @@ impl<'a> Iterator for SimHashIter<'a> {
         self.weights.fill(0.);
         let seed = self.seeder.next_u64();
         for (h, x) in self
-            .feats
+            .feature
             .iter()
             .map(|&(i, x)| (crate::hash_u64(i, seed), x))
         {

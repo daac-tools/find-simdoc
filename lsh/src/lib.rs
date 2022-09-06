@@ -7,6 +7,7 @@ use hashbrown::HashSet;
 
 #[inline(always)]
 pub fn hash_u64(x: u64, seed: u64) -> u64 {
+    // TODO: Replace faster hashing such as SplitMix
     fasthash::city::hash64_with_seed(x.to_le_bytes(), seed)
 }
 

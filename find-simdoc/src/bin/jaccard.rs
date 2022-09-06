@@ -88,17 +88,20 @@ where
     let mut extractor = FeatureExtractor::new(config);
     let mut joiner = ChunkedJoiner::<u64>::new(num_chunks).shows_progress(true);
 
-    eprintln!("[find_in_jaccard] Converting texts into sketches...");
-    let mut features = vec![];
-    for text in texts {
+    eprintln!("Converting sentences into sketches...");
+    let mut feature = vec![];
+    for (i, text) in texts.enumerate() {
+        if (i + 1) % 1000 == 0 {
+            eprintln!("Processed {} sentences...", i + 1);
+        }
         let text = text.as_ref();
         assert!(!text.is_empty());
-        extractor.extract(text, &mut features);
-        joiner.add(hasher.iter(&features))?;
+        extractor.extract(text, &mut feature);
+        joiner.add(hasher.iter(&feature))?;
     }
     let memory_in_bytes = joiner.memory_in_bytes() as f64;
     eprintln!(
-        "[find_in_jaccard] Produced {} sketches in {} MiB",
+        "Produced {} sketches in {} MiB",
         joiner.num_sketches(),
         memory_in_bytes / (1024. * 1024.)
     );
