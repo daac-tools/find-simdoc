@@ -50,7 +50,7 @@ The approach consists of three steps:
 Note that the current version supports only set representations in Step 1.
 Supporting weighting approaches such as TF-IDF is the future work.
 
-#### In the Jaccard space
+#### Jaccard space
 
 The executable `jaccard` provides a similarity search in the [Jaccard space](https://en.wikipedia.org/wiki/Jaccard_index).
 You can check the arguments with the following command.
@@ -82,7 +82,7 @@ i,j,dist
 1250,43620,0.09765625
 ```
 
-#### In the Cosine space
+#### Cosine space
 
 The executable `cosine` provides a similarity search in the [Cosine space](https://en.wikipedia.org/wiki/Cosine_similarity).
 You can check the arguments with the following command.
@@ -144,21 +144,28 @@ he forecast the chancellor ' s budget tax cuts would increase consumer expenditu
 ### 4. Testing the accuracy of 1-bit minwise hashing
 
 LSH is an approximate solution, and you may want to know the accuracy.
-
 The executable `minhash_mae` allows you to examine the *mean absolute error (MAE)*,
 the averaged gap between the normalized Hamming distance with the minwise hashing
 and the actual Jaccard distance.
 
 To use this executable, we recommend extracting a small subset from your dataset
-because it computes distances for all possible pairs.
+because it exactly computes distances for all possible pairs.
 
 ```
 $ head -5000 reuters.txt > reuters.5k.txt
 ```
 
+You can examine MAEs for the number of dimensions of sketches from 64 to 6400
+(i.e., the number of chunks from 1 to 100)
+with the following command.
+The parameters for feature extraction is the same as those of `jaccard`.
+
 ```
 $ cargo run --release -p find-simdoc --bin minhash_mae -- -i reuters.5k.txt -w 5 > mae.csv
 ```
+
+The MAEs will be reported as follows.
+It can be seen that the accuracy improves as the number of dimensions increases.
 
 ```
 $ cat mae.csv
