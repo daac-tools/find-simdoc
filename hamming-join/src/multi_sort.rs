@@ -60,7 +60,7 @@ where
         self
     }
 
-    pub fn threshold_in_sort(mut self, threshold_in_sort: usize) -> Self {
+    pub const fn threshold_in_sort(mut self, threshold_in_sort: usize) -> Self {
         self.threshold_in_sort = threshold_in_sort;
         self
     }

@@ -65,6 +65,7 @@ mod tests {
     fn test_q4() {
         let tokens = vec!["a", "b", "c"];
         let mut iter = ShingleIter::new(&tokens, 4);
+        assert_eq!(iter.next(), Some(&tokens[0..3])); // shrinked
         assert_eq!(iter.next(), None);
     }
 }
