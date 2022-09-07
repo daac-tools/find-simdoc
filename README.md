@@ -84,7 +84,7 @@ $ cargo run --release -p find-simdoc --bin jaccard -- -i reuters.txt -r 0.1 -w 5
 Argument `-c` indicates the number of dimensions in the Hamming space
 and is a trade-off parameter between approximation accuracy and search speed.
 The larger this value, the higher the accuracy, but the longer the search takes.
-[This section](#4.-testing-the-accuracy-of-1-bit-minwise-hashing) describes how to examine the approximation accuracy for the number of dimensions.
+[This section](#4-testing-the-accuracy-of-1-bit-minwise-hashing) describes how to examine the approximation accuracy for the number of dimensions.
 
 Pairs of similar documents (indicated by zero-origin line numbers) and their distances are reported.
 
