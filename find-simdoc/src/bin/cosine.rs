@@ -73,13 +73,15 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+type SimPair = (usize, usize, f64);
+
 fn find_in_cosine<I, S>(
     texts: I,
     radius: f64,
     num_chunks: usize,
     seed: u64,
     config: FeatureConfig,
-) -> Result<Vec<(usize, usize, f64)>, Box<dyn Error>>
+) -> Result<Vec<SimPair>, Box<dyn Error>>
 where
     I: Iterator<Item = S>,
     S: AsRef<str>,

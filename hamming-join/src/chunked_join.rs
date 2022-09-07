@@ -19,7 +19,7 @@ where
         }
     }
 
-    pub fn shows_progress(mut self, yes: bool) -> Self {
+    pub const fn shows_progress(mut self, yes: bool) -> Self {
         self.shows_progress = yes;
         self
     }
@@ -31,9 +31,9 @@ where
         let num_chunks = self.num_chunks();
         let mut iter = sketch.into_iter();
         for chunk in self.chunks.iter_mut() {
-            chunk.push(iter.next().ok_or(anyhow!(
-                "The input sketch must include {num_chunks} chunks at least."
-            ))?);
+            chunk.push(iter.next().ok_or_else(|| {
+                anyhow!("The input sketch must include {num_chunks} chunks at least.")
+            })?);
         }
         Ok(())
     }

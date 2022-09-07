@@ -90,13 +90,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     eprintln!("Computing exact Jaccard distances...");
     start = Instant::now();
     let mut jac_dists = vec![];
-    for i in 0..n {
+    for i in 0..features.len() {
         if (i + 1) % 100 == 0 {
-            eprintln!("Processed {}/{}...", i + 1, n);
+            eprintln!("Processed {}/{}...", i + 1, features.len());
         }
         let x = &features[i];
-        for j in i + 1..n {
-            let y = &features[j];
+        for y in features.iter().skip(i + 1) {
             jac_dists.push(lsh::jaccard_distance(x.iter().clone(), y.iter().clone()));
         }
     }
@@ -110,10 +109,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     for num_chunks in 1..=100 {
         let mut sum_error = 0.;
         let mut jac_dist_iter = jac_dists.iter();
-        for i in 0..n {
+        for i in 0..sketches.len() {
             let x = &sketches[i];
-            for j in i + 1..n {
-                let y = &sketches[j];
+            for y in sketches.iter().skip(i + 1) {
                 let jac_dist = *jac_dist_iter.next().unwrap();
                 let ham_dist = hamming_distance(&x[..num_chunks], &y[..num_chunks]);
                 sum_error += (jac_dist - ham_dist).abs();

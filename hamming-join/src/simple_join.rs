@@ -20,7 +20,7 @@ where
         }
     }
 
-    pub fn shows_progress(mut self, yes: bool) -> Self {
+    pub const fn shows_progress(mut self, yes: bool) -> Self {
         self.shows_progress = yes;
         self
     }
@@ -32,10 +32,12 @@ where
         let mut iter = sketch.into_iter();
         let mut sketch = Vec::with_capacity(self.num_chunks());
         for _ in 0..self.num_chunks() {
-            sketch.push(iter.next().ok_or(anyhow!(
-                "The input sketch must include {} chunks at least.",
-                self.num_chunks()
-            ))?)
+            sketch.push(iter.next().ok_or_else(|| {
+                anyhow!(
+                    "The input sketch must include {} chunks at least.",
+                    self.num_chunks()
+                )
+            })?)
         }
         self.sketches.push(sketch);
         Ok(())
