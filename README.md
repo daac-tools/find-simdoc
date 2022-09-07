@@ -81,8 +81,8 @@ Run the following command if you want to search for `reuters.txt` with
 $ cargo run --release -p find-simdoc --bin jaccard -- -i reuters.txt -r 0.1 -w 5 -c 8 > result-jaccard.csv
 ```
 
-Argument `-c` indicates the number of dimensions in the Hamming space
-and is a trade-off parameter between approximation accuracy and search speed.
+Argument `-c` indicates the number of dimensions in the Hamming space,
+a trade-off parameter between approximation accuracy and search speed.
 The larger this value, the higher the accuracy, but the longer the search takes.
 [This section](#4-testing-the-accuracy-of-1-bit-minwise-hashing) describes how to examine the approximation accuracy for the number of dimensions.
 
