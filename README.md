@@ -1,33 +1,36 @@
 # Finding similar documents
 
-This software provides fast all-pair similarity searches in a document file.
+This software provides fast all-pair similarity searches in documents.
 
 ## Problem definition
 
 - Input
-  - List of sentences $D = (d_1, d_2, \dots, d_n)$
+  - List of documents $D = (d_1, d_2, \dots, d_n)$
   - Distance function $\delta: D \times D \rightarrow [0,1]$
   - Radius threshold $r \in [0,1]$
 - Output
-  - All pairs of similar sentence ids $R = \\{ (i,j): i < j, \delta(d_i, d_j) \leq r \\}$
+  - All pairs of similar document ids $R = \\{ (i,j): i < j, \delta(d_i, d_j) \leq r \\}$
 
-## Example of finding similar sentences
+## Running example
 
-This software is implemented in Rust.
-First of all, install `rustc` and `cargo` following the [official instructions](https://www.rust-lang.org/tools/install).
+Here, we describe a basic usage of this software through a running example.
+
+First of all, install `rustc` and `cargo` following the [official instructions](https://www.rust-lang.org/tools/install) since this software is implemented in Rust.
 
 ### 1. Data preparation
 
-You have to prepare a document file containing search sentences line by line.
+You have to prepare a text file containing documents line by line.
 
-From the Reuters Corpus provided by NLTK, you can produce the document file used throughout this example, with the following command.
+To produce an example file used throughout this description, you can use `scripts/load_nltk_sents.py` that downloads the Reuters Corpus provided by NLTK.
+Run the following command.
 
 ```
 $ ./scripts/load_nltk_sents.py reuters
 ```
 
 `reuters.txt` will be output.
-Note that, since lines are shuffled to deduplicate sentences, your file will not be the identical to the following example.
+Fully-duplicate documents are removed because they are not noise in evaluation of similarity searches.
+To do this, the output lines are shuffled, and your file will not be the identical to the following example.
 
 ```
 $ head reuters.txt
@@ -43,18 +46,18 @@ since last august smart has been leading talks to open up japan to purchases of 
 the resulting association will operate under the name of charter and will be based in bristol .
 ```
 
-### 2. Finding all pairs of similar sentences
+### 2. Finding all pairs of similar documents
 
-The workspace `find-simdoc` provides CLI tools for fast all-pair similarity searches in a document file.
+The workspace `find-simdoc` provides CLI tools for fast all-pair similarity searches in documents.
 The approach consists of three steps:
 
-1. Extract features from sentences
+1. Extract features from documents
    - Set representation of character ngrams
    - Set representation of word ngrams
 2. Convert the features into binary sketches through locality sensitive hashing (LSH)
    - [1-bit minwise hashing](https://arxiv.org/abs/0910.3349) for the Jaccard similarity
    - [Simplified simhash](https://dl.acm.org/doi/10.1145/1242572.1242592) for the Cosine similarity
-3. Search for similar sketches using a modified variant of the [sketch sorting approach](https://proceedings.mlr.press/v13/tabei10a.html)
+3. Search for similar sketches in the Hamming space using a modified variant of the [sketch sorting approach](https://proceedings.mlr.press/v13/tabei10a.html)
 
 Note that the current version supports only set representations in Step 1.
 Supporting weighting approaches such as TF-IDF is the future work.
@@ -68,14 +71,14 @@ You can check the arguments with the following command.
 $ cargo run --release -p find-simdoc --bin jaccard -- --help
 ```
 
-If you want to find similar sentences in `reuters.txt` within search radius `0.1` for tokens of
+If you want to find similar documents in `reuters.txt` within search radius `0.1` for tokens of
 character `5`-grams, run the following command.
 
 ```
 $ cargo run --release -p find-simdoc --bin jaccard -- -i reuters.txt -r 0.1 -w 5 > result-jaccard.csv
 ```
 
-Pairs of similar sentences (indicated by line numbers) and their distances are reported.
+Pairs of similar documents (indicated by line numbers) and their distances are reported.
 
 ```
 $ head result-jaccard.csv
@@ -100,14 +103,14 @@ You can check the arguments with the following command.
 $ cargo run --release -p find-simdoc --bin cosine -- --help
 ```
 
-If you want to find similar sentences in `reuters.txt` within search radius `0.15` for tokens of
+If you want to find similar documents in `reuters.txt` within search radius `0.15` for tokens of
 word `3`-grams (separated by a space), run the following command.
 
 ```
 $ cargo run --release -p find-simdoc --bin cosine -- -i reuters.txt -r 0.15 -d " " -w 3 > result-cosine.csv
 ```
 
-Pairs of similar sentences (indicated by line numbers) and their distances are reported.
+Pairs of similar documents (indicated by line numbers) and their distances are reported.
 
 ```
 $ head result-cosine.csv
@@ -123,11 +126,11 @@ i,j,dist
 1585,6615,0.13671875
 ```
 
-### 3. Printing similar sentences
+### 3. Printing similar documents
 
-The executable `dump` prints similar sentences from an output CSV file.
+The executable `dump` prints similar documents from an output CSV file.
 
-If you want to print similar sentences in `reuters.txt` with the result `result-jaccard.csv`,
+If you want to print similar documents in `reuters.txt` with the result `result-jaccard.csv`,
 run the following command.
 
 ```
@@ -154,8 +157,7 @@ he forecast the chancellor ' s budget tax cuts would increase consumer expenditu
 
 LSH is an approximate solution, and you may want to know the accuracy.
 The executable `minhash_mae` allows you to examine the *mean absolute error (MAE)*,
-the averaged gap between the normalized Hamming distance with the minwise hashing
-and the actual Jaccard distance.
+the averaged gap between the normalized Hamming distance and the actual Jaccard distance.
 
 To use this executable, we recommend extracting a small subset from your dataset
 because it exactly computes distances for all possible pairs.
@@ -164,7 +166,7 @@ because it exactly computes distances for all possible pairs.
 $ head -1000 reuters.txt > reuters.1k.txt
 ```
 
-You can examine MAEs for the number of dimensions of sketches from 64 to 6400
+You can examine MAEs for the number of Hamming dimensions from 64 to 6400
 (i.e., the number of chunks from 1 to 100)
 with the following command.
 The parameters for feature extraction is the same as those of `jaccard`.
