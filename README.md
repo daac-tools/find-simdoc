@@ -9,7 +9,7 @@ This software provides fast all-pair similarity searches in a document file.
   - Distance function $\delta: D \times D \rightarrow [0,1]$
   - Radius threshold $r \in [0,1]$
 - Output
-  - All pairs of similar sentence ids $R = \{ (i,j): i < j, \delta(d_i, d_j) \leq r \}$
+  - All pairs of similar sentence ids $R = \\{ (i,j): i < j, \delta(d_i, d_j) \leq r \\}$
 
 ## Example of finding similar sentences
 
@@ -189,6 +189,28 @@ num_chunks,dimensions,mean_absolute_error
 99,6336,0.009999685515430031
 100,6400,0.009950974569090776
 ```
+
+## Disclaimer
+
+This software is developed by LegalForce, Inc.,
+but not an officially supported LegalForce product.
+
+## License
+
+Licensed under either of
+
+ * Apache License, Version 2.0
+   ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
+ * MIT license
+   ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
+
+at your option.
+
+## Contribution
+
+Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
+dual licensed as above, without any additional terms or conditions.
 
 ## TODO
 
