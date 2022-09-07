@@ -49,8 +49,8 @@ The workspace `find-simdoc` provides CLI tools for fast all-pair similarity sear
 The approach consists of three steps:
 
 1. Extract features from sentences
-   - Set representation of character q-grams
-   - Set representation of word q-grams
+   - Set representation of character ngrams
+   - Set representation of word ngrams
 2. Convert the features into binary sketches through locality sensitive hashing (LSH)
    - [1-bit minwise hashing](https://arxiv.org/abs/0910.3349) for the Jaccard similarity
    - [Simplified simhash](https://dl.acm.org/doi/10.1145/1242572.1242592) for the Cosine similarity
