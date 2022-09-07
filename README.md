@@ -2,6 +2,15 @@
 
 This software provides fast all-pair similarity searches in a document file.
 
+## Problem definition
+
+- Input
+  - List of sentences $D = (d_1, d_2, \dots, d_n)$
+  - Distance function $\delta: D \times D \rightarrow [0,1]$
+  - Radius threshold $r \in [0,1]$
+- Output
+  - All pairs of similar sentence ids $R = \{ (i,j): i < j, \delta(d_i, d_j) \leq r \}$
+
 ## Example of finding similar sentences
 
 This software is implemented in Rust.
@@ -152,7 +161,7 @@ To use this executable, we recommend extracting a small subset from your dataset
 because it exactly computes distances for all possible pairs.
 
 ```
-$ head -5000 reuters.txt > reuters.5k.txt
+$ head -1000 reuters.txt > reuters.1k.txt
 ```
 
 You can examine MAEs for the number of dimensions of sketches from 64 to 6400
@@ -161,7 +170,7 @@ with the following command.
 The parameters for feature extraction is the same as those of `jaccard`.
 
 ```
-$ cargo run --release -p find-simdoc --bin minhash_mae -- -i reuters.5k.txt -w 5 > mae.csv
+$ cargo run --release -p find-simdoc --bin minhash_mae -- -i reuters.1k.txt -w 5 > mae.csv
 ```
 
 The MAEs will be reported as follows.
@@ -183,6 +192,6 @@ num_chunks,dimensions,mean_absolute_error
 
 ## TODO
 
-- Add threading for `chunked_join`
+- Add threading
 - Add TF-IDF weighting
 - Derive the complexity

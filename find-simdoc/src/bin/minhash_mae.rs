@@ -2,6 +2,7 @@ use std::error::Error;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
+use std::time::Instant;
 
 use clap::Parser;
 use find_simdoc::feature::{FeatureConfig, FeatureExtractor};
@@ -54,6 +55,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut extractor = FeatureExtractor::new(config);
 
     eprintln!("Loading texts and extracting features...");
+    let mut start = Instant::now();
     let mut features = vec![];
     for text in texts {
         assert!(!text.is_empty());
@@ -62,9 +64,15 @@ fn main() -> Result<(), Box<dyn Error>> {
         features.push(feature);
     }
     let n = features.len();
-    eprintln!("Extracted {n} features ({} pairs)", n * (n - 1) / 2);
+    let duration = start.elapsed();
+    eprintln!(
+        "Extracted {n} features ({} pairs) in {} sec",
+        n * (n - 1) / 2,
+        duration.as_secs_f64()
+    );
 
     eprintln!("Producing binary sketches...");
+    start = Instant::now();
     let hasher = MinHasher::new(seeder.next_u64());
     let mut sketches = vec![];
     for (i, feature) in features.iter().enumerate() {
@@ -76,8 +84,11 @@ fn main() -> Result<(), Box<dyn Error>> {
         (0..100).for_each(|_| sketch.push(iter.next().unwrap()));
         sketches.push(sketch);
     }
+    let duration = start.elapsed();
+    eprintln!("Produced in {} sec", duration.as_secs_f64());
 
     eprintln!("Computing exact Jaccard distances...");
+    start = Instant::now();
     let mut jac_dists = vec![];
     for i in 0..n {
         if (i + 1) % 100 == 0 {
@@ -89,8 +100,12 @@ fn main() -> Result<(), Box<dyn Error>> {
             jac_dists.push(lsh::jaccard_distance(x.iter().clone(), y.iter().clone()));
         }
     }
+    let duration = start.elapsed();
+    eprintln!("Computed in {} sec", duration.as_secs_f64());
 
     eprintln!("Computing Hamming distances...");
+    start = Instant::now();
+
     println!("num_chunks,dimensions,mean_absolute_error");
     for num_chunks in 1..=100 {
         let mut sum_error = 0.;
@@ -109,6 +124,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         let mae = sum_error / jac_dists.len() as f64;
         println!("{num_chunks},{dim},{mae}");
     }
+    let duration = start.elapsed();
+    eprintln!("Computed in {} sec", duration.as_secs_f64());
 
     Ok(())
 }

@@ -4,11 +4,11 @@ pub mod simhash;
 use std::hash::Hash;
 
 use hashbrown::HashSet;
+use rand_xoshiro::rand_core::{RngCore, SeedableRng};
 
 #[inline(always)]
 pub fn hash_u64(x: u64, seed: u64) -> u64 {
-    // TODO: Replace faster hashing such as SplitMix
-    fasthash::city::hash64_with_seed(x.to_le_bytes(), seed)
+    rand_xoshiro::SplitMix64::seed_from_u64(x ^ seed).next_u64()
 }
 
 pub fn jaccard_distance<I, T>(lhs: I, rhs: I) -> f64
