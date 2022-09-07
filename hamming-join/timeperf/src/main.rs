@@ -5,13 +5,13 @@ use hamming_join::simple_join::SimpleJoiner;
 
 const TRIALS: usize = 1;
 const SCALES: [usize; 4] = [1_000, 10_000, 100_000, 1_000_000];
-const CHUNKS: [usize; 3] = [1, 2, 4];
+const CHUNKS: [usize; 3] = [4, 8, 16];
 const RADII: [f64; 4] = [0.01, 0.02, 0.05, 0.1];
 
 macro_rules! timeperf_common {
     ($percent:expr, $name:expr, $method:ident, $sketches:ident, $radii:ident, $chunks:ident, $scales:ident) => {
         for &num_chunks in $chunks {
-            let mut joiner = $method::new(num_chunks);
+            let mut joiner = $method::new(num_chunks).shows_progress(true);
             for &num_sketches in $scales {
                 while joiner.num_sketches() < num_sketches {
                     let sketch = &$sketches[joiner.num_sketches()];
@@ -35,7 +35,7 @@ macro_rules! timeperf_common {
 
 fn main() {
     main_percent(50);
-    main_percent(70);
+    main_percent(80);
 }
 
 fn main_percent(percent: u64) {
