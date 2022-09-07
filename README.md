@@ -2,6 +2,15 @@
 
 This software provides fast all-pair similarity searches in a document file.
 
+## Problem definition
+
+- Input
+  - List of sentences $D = (d_1, d_2, \dots, d_n)$
+  - Distance function $\delta: D \times D \rightarrow [0,1]$
+  - Radius threshold $r \in [0,1]$
+- Output
+  - All pairs of similar sentence ids $R = \{ (i,j): i < j, \delta(d_i, d_j) \leq r \}$
+
 ## Example of finding similar sentences
 
 This software is implemented in Rust.
