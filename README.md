@@ -71,14 +71,22 @@ You can check the arguments with the following command.
 $ cargo run --release -p find-simdoc --bin jaccard -- --help
 ```
 
-If you want to find similar documents in `reuters.txt` within search radius `0.1` for tokens of
-character `5`-grams, run the following command.
+Run the following command if you want to search for `reuters.txt` with
+
+- search radius `0.1`,
+- tokens of character `5`-grams, and
+- `8*64=512` dimensions in the Hamming space.
 
 ```
-$ cargo run --release -p find-simdoc --bin jaccard -- -i reuters.txt -r 0.1 -w 5 > result-jaccard.csv
+$ cargo run --release -p find-simdoc --bin jaccard -- -i reuters.txt -r 0.1 -w 5 -c 8 > result-jaccard.csv
 ```
 
-Pairs of similar documents (indicated by line numbers) and their distances are reported.
+Argument `-c` indicates the number of dimensions in the Hamming space
+and is a trade-off parameter between approximation accuracy and search speed.
+The larger this value, the higher the accuracy, but the longer the search takes.
+[This section](#4.-testing-the-accuracy-of-1-bit-minwise-hashing) describes how to examine the approximation accuracy for the number of dimensions.
+
+Pairs of similar documents (indicated by zero-origin line numbers) and their distances are reported.
 
 ```
 $ head result-jaccard.csv
@@ -103,27 +111,31 @@ You can check the arguments with the following command.
 $ cargo run --release -p find-simdoc --bin cosine -- --help
 ```
 
-If you want to find similar documents in `reuters.txt` within search radius `0.15` for tokens of
-word `3`-grams (separated by a space), run the following command.
+Run the following command if you want to search for `reuters.txt` with
+
+- search radius `0.15`,
+- tokens of word `3`-grams
+- word delimiter `" "` (i.e., a space), and
+- `4*64=256` dimensions in the Hamming space.
 
 ```
-$ cargo run --release -p find-simdoc --bin cosine -- -i reuters.txt -r 0.15 -d " " -w 3 > result-cosine.csv
+$ cargo run --release -p find-simdoc --bin cosine -- -i reuters.txt -r 0.15 -d " " -w 3 -c 4 > result-cosine.csv
 ```
 
-Pairs of similar documents (indicated by line numbers) and their distances are reported.
+Pairs of similar documents (indicated by zero-origin line numbers) and their distances are reported.
 
 ```
 $ head result-cosine.csv
 i,j,dist
-31,1357,0.1015625
-93,38484,0.12890625
-173,49999,0.103515625
-308,51423,0.109375
-371,47578,0.091796875
-1243,8907,0.14453125
-1250,42018,0.130859375
-1486,39803,0.14453125
-1585,6615,0.13671875
+31,1357,0.11328125
+93,38484,0.14453125
+103,50206,0.14453125
+173,49999,0.09375
+286,22746,0.1484375
+308,51423,0.12890625
+371,47578,0.08984375
+448,27050,0.1171875
+988,49397,0.12109375
 ```
 
 ### 3. Printing similar documents
@@ -167,7 +179,7 @@ $ head -1000 reuters.txt > reuters.1k.txt
 ```
 
 You can examine MAEs for the number of Hamming dimensions from 64 to 6400
-(i.e., the number of chunks from 1 to 100)
+(i.e., the number of chunks from 1 to 100 indicated with `-c`)
 with the following command.
 The parameters for feature extraction is the same as those of `jaccard`.
 
