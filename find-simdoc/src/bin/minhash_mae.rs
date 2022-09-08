@@ -10,6 +10,8 @@ use hamming_join::sketch::Sketch;
 use lsh::minhash::MinHasher;
 use rand::{RngCore, SeedableRng};
 
+const MAX_CHUNKS: usize = 100;
+
 #[derive(Parser, Debug)]
 #[clap(
     name = "find-simdoc-minhash_mae",
@@ -54,59 +56,81 @@ fn main() -> Result<(), Box<dyn Error>> {
     let config = FeatureConfig::new(window_size, delimiter, seeder.next_u64());
     let mut extractor = FeatureExtractor::new(config);
 
-    eprintln!("Loading texts and extracting features...");
-    let mut start = Instant::now();
-    let mut features = vec![];
-    for text in texts {
-        assert!(!text.is_empty());
-        let mut feature = vec![];
-        extractor.extract(text, &mut feature);
-        features.push(feature);
-    }
-    let n = features.len();
-    let duration = start.elapsed();
-    eprintln!(
-        "Extracted {n} features ({} pairs) in {} sec",
-        n * (n - 1) / 2,
-        duration.as_secs_f64()
-    );
+    let features = {
+        eprintln!("Loading texts and extracting features...");
+        let start = Instant::now();
+        let mut features = vec![];
+        for text in texts {
+            assert!(!text.is_empty());
+            let mut feature = vec![];
+            extractor.extract(text, &mut feature);
+            features.push(feature);
+        }
+        let duration = start.elapsed();
+        let total_bytes =
+            features.iter().fold(0, |acc, f| acc + f.len()) * std::mem::size_of::<u64>();
+        eprintln!(
+            "Extracted {} features in {} sec, consuming {} MiB",
+            features.len(),
+            duration.as_secs_f64(),
+            total_bytes as f64 / (1024. * 1024.)
+        );
+        features
+    };
 
-    eprintln!("Producing binary sketches...");
-    start = Instant::now();
-    let hasher = MinHasher::new(seeder.next_u64());
-    let mut sketches = vec![];
-    for (i, feature) in features.iter().enumerate() {
-        if (i + 1) % 100 == 0 {
-            eprintln!("Processed {}/{}...", i + 1, n);
+    let sketches = {
+        eprintln!("Producing binary sketches...");
+        let start = Instant::now();
+        let hasher = MinHasher::new(seeder.next_u64());
+        let mut sketches = Vec::with_capacity(features.len());
+        for (i, feature) in features.iter().enumerate() {
+            if (i + 1) % 100 == 0 {
+                eprintln!("Processed {}/{}...", i + 1, features.len());
+            }
+            let mut iter = hasher.iter(feature);
+            let mut sketch = Vec::with_capacity(MAX_CHUNKS);
+            (0..MAX_CHUNKS).for_each(|_| sketch.push(iter.next().unwrap()));
+            sketches.push(sketch);
         }
-        let mut iter = hasher.iter(feature);
-        let mut sketch = Vec::with_capacity(100);
-        (0..100).for_each(|_| sketch.push(iter.next().unwrap()));
-        sketches.push(sketch);
-    }
-    let duration = start.elapsed();
-    eprintln!("Produced in {} sec", duration.as_secs_f64());
+        let duration = start.elapsed();
+        let total_bytes = sketches.len() * MAX_CHUNKS * std::mem::size_of::<u64>();
+        eprintln!(
+            "Produced in {} sec, consuming {} MiB",
+            duration.as_secs_f64(),
+            total_bytes as f64 / (1024. * 1024.)
+        );
+        sketches
+    };
 
-    eprintln!("Computing exact Jaccard distances...");
-    start = Instant::now();
-    let mut jac_dists = vec![];
-    for i in 0..features.len() {
-        if (i + 1) % 100 == 0 {
-            eprintln!("Processed {}/{}...", i + 1, features.len());
+    let jac_dists = {
+        let possible_pairs = features.len() * (features.len() - 1) / 2;
+        eprintln!("Computing exact Jaccard distances for {possible_pairs} pairs...");
+        let start = Instant::now();
+        let mut jac_dists = Vec::with_capacity(possible_pairs);
+        for i in 0..features.len() {
+            if (i + 1) % 100 == 0 {
+                eprintln!("Processed {}/{}...", i + 1, features.len());
+            }
+            let x = &features[i];
+            for y in features.iter().skip(i + 1) {
+                jac_dists.push(lsh::jaccard_distance(x.iter().clone(), y.iter().clone()));
+            }
         }
-        let x = &features[i];
-        for y in features.iter().skip(i + 1) {
-            jac_dists.push(lsh::jaccard_distance(x.iter().clone(), y.iter().clone()));
-        }
-    }
-    let duration = start.elapsed();
-    eprintln!("Computed in {} sec", duration.as_secs_f64());
+        let duration = start.elapsed();
+        let total_bytes = jac_dists.len() * std::mem::size_of::<f64>();
+        eprintln!(
+            "Computed in {} sec, consuming {} MiB",
+            duration.as_secs_f64(),
+            total_bytes as f64 / (1024. * 1024.)
+        );
+        jac_dists
+    };
 
     eprintln!("Computing Hamming distances...");
-    start = Instant::now();
+    let start = Instant::now();
 
     println!("num_chunks,dimensions,mean_absolute_error");
-    for num_chunks in 1..=100 {
+    for num_chunks in 1..=MAX_CHUNKS {
         let mut sum_error = 0.;
         let mut jac_dist_iter = jac_dists.iter();
         for i in 0..sketches.len() {

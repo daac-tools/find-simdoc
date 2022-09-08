@@ -13,7 +13,7 @@ This software provides fast all-pair similarity searches in documents.
 
 ## Running example
 
-Here, we describe a basic usage of this software through a running example.
+Here, we describe the basic usage of this software through a running example.
 
 First of all, install `rustc` and `cargo` following the [official instructions](https://www.rust-lang.org/tools/install) since this software is implemented in Rust.
 
@@ -28,8 +28,7 @@ Run the following command.
 $ ./scripts/load_nltk_sents.py reuters
 ```
 
-`reuters.txt` will be output.
-Fully-duplicate documents are removed because they are not noise in evaluation of similarity searches.
+`reuters.txt` will be output, in which fully-duplicate documents are removed because they are noisy in evaluation of similarity searches.
 To do this, the output lines are shuffled, and your file will not be the identical to the following example.
 
 ```
@@ -172,7 +171,7 @@ The executable `minhash_mae` allows you to examine the *mean absolute error (MAE
 the averaged gap between the normalized Hamming distance and the actual Jaccard distance.
 
 To use this executable, we recommend extracting a small subset from your dataset
-because it exactly computes distances for all possible pairs.
+because it exactly computes distances for all possible pairs and maintains a large amount of data in memory.
 
 ```
 $ head -1000 reuters.txt > reuters.1k.txt
