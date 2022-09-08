@@ -171,7 +171,7 @@ The executable `minhash_acc` allows you to examine
 - the *mean absolute error (MAE)* that is the averaged gap between the normalized Hamming distance and the actual Jaccard distance,
 - precisions for search radii {0.1, 0.2, 0.5},
 - recalls for search radii {0.1, 0.2, 0.5}, and
-- F1s for search radii {0.1, 0.2, 0.5}.
+- F1 scores for search radii {0.1, 0.2, 0.5}.
 
 To use this executable, we recommend extracting a small subset from your dataset
 because it exactly computes distances for all possible pairs and maintains a large amount of data in main memory.
