@@ -189,7 +189,7 @@ The arguments for feature extraction are the same as those of `jaccard`.
 $ cargo run --release -p find-simdoc --bin minhash_acc -- -i reuters.5k.txt -w 5 > acc.csv
 ```
 
-The MAEs will be reported as follows.
+The statistics will be reported as follows.
 It can be seen that the accuracy improves as the number of dimensions increases.
 
 ```
