@@ -44,7 +44,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     let window_size = args.window_size;
     let seed = args.seed;
 
-    assert_ne!(window_size, 0);
+    if window_size == 0 {
+        return Err("window_size must not be 0.".into());
+    }
 
     let texts = BufReader::new(File::open(document_path)?)
         .lines()
