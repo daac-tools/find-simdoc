@@ -5,8 +5,6 @@ use fasthash::{CityHasher, FastHasher};
 
 use crate::shingling::ShingleIter;
 
-const BOS_FEATURE: u64 = 0;
-
 #[derive(Clone, Copy, Debug)]
 pub struct FeatureConfig {
     window_size: usize,
@@ -57,9 +55,6 @@ impl FeatureExtractor {
         let text = text.as_ref();
 
         feature.clear();
-        for _ in 1..self.config.window_size {
-            feature.push(BOS_FEATURE);
-        }
         if self.config.delimiter.is_none() && self.config.window_size == 1 {
             // The simplest case.
             text.chars().for_each(|c| feature.push(c as u64));
@@ -68,9 +63,6 @@ impl FeatureExtractor {
             for ranges in ShingleIter::new(&self.token_ranges, self.config.window_size) {
                 feature.push(self.config.hash(ranges.iter().cloned().map(|r| &text[r])));
             }
-        }
-        for _ in 1..self.config.window_size {
-            feature.push(BOS_FEATURE);
         }
     }
 
@@ -81,9 +73,6 @@ impl FeatureExtractor {
         let text = text.as_ref();
 
         feature.clear();
-        for _ in 1..self.config.window_size {
-            feature.push((BOS_FEATURE, 0.));
-        }
         if self.config.delimiter.is_none() && self.config.window_size == 1 {
             // The simplest case.
             text.chars().for_each(|c| {
@@ -99,14 +88,13 @@ impl FeatureExtractor {
                 feature.push((f, w))
             }
         }
-        for _ in 1..self.config.window_size {
-            feature.push((BOS_FEATURE, 0.));
-        }
     }
 
     fn tokenize(&mut self, text: &str) {
         self.token_ranges.clear();
-
+        for _ in 1..self.config.window_size {
+            self.token_ranges.push(0..0); // BOS
+        }
         let mut offset = 0;
         if let Some(delim) = self.config.delimiter {
             while offset < text.len() {
@@ -125,6 +113,9 @@ impl FeatureExtractor {
                 self.token_ranges.push(offset..offset + len);
                 offset += len;
             }
+        }
+        for _ in 1..self.config.window_size {
+            self.token_ranges.push(text.len()..text.len()); // EOS
         }
     }
 }
@@ -160,11 +151,11 @@ mod tests {
         assert_eq!(
             feature,
             vec![
-                0,
+                config.hash(&["", "a"]),
                 config.hash(&["a", "b"]),
                 config.hash(&["b", "c"]),
                 config.hash(&["c", "d"]),
-                0,
+                config.hash(&["d", ""]),
             ]
         )
     }
@@ -181,12 +172,12 @@ mod tests {
         assert_eq!(
             feature,
             vec![
-                0,
-                0,
+                config.hash(&["", "", "a"]),
+                config.hash(&["", "a", "b"]),
                 config.hash(&["a", "b", "c"]),
                 config.hash(&["b", "c", "d"]),
-                0,
-                0,
+                config.hash(&["c", "d", ""]),
+                config.hash(&["d", "", ""]),
             ]
         )
     }
@@ -222,10 +213,10 @@ mod tests {
         assert_eq!(
             feature,
             vec![
-                0,
+                config.hash(&["", "abc"]),
                 config.hash(&["abc", "de"]),
                 config.hash(&["de", "fgh"]),
-                0,
+                config.hash(&["fgh", ""]),
             ]
         )
     }
@@ -241,7 +232,13 @@ mod tests {
         extractor.extract(text, &mut feature);
         assert_eq!(
             feature,
-            vec![0, 0, config.hash(&["abc", "de", "fgh"]), 0, 0]
+            vec![
+                config.hash(&["", "", "abc"]),
+                config.hash(&["", "abc", "de"]),
+                config.hash(&["abc", "de", "fgh"]),
+                config.hash(&["de", "fgh", ""]),
+                config.hash(&["fgh", "", ""]),
+            ]
         )
     }
 }

@@ -7,8 +7,7 @@ pub struct ShingleIter<'a, T> {
 impl<'a, T> ShingleIter<'a, T> {
     pub fn new(tokens: &'a [T], window_size: usize) -> Self {
         assert!(!tokens.is_empty());
-        // Avoid to generate empty features
-        let window_size = window_size.min(tokens.len());
+        assert!(window_size <= tokens.len());
         Self {
             tokens,
             window_size,
@@ -62,10 +61,9 @@ mod tests {
     }
 
     #[test]
+    #[should_panic]
     fn test_q4() {
         let tokens = vec!["a", "b", "c"];
-        let mut iter = ShingleIter::new(&tokens, 4);
-        assert_eq!(iter.next(), Some(&tokens[0..3])); // shrinked
-        assert_eq!(iter.next(), None);
+        ShingleIter::new(&tokens, 4);
     }
 }
