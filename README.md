@@ -35,8 +35,7 @@ Run the following command.
 $ ./scripts/load_nltk_dataset.py reuters
 ```
 
-`reuters.txt` will be output, in which fully-duplicate documents are removed because they are noisy in evaluation of similarity searches.
-To do this, the output lines are shuffled, and your file will not be the identical to the following example.
+`reuters.txt` will be output.
 
 ```
 $ head reuters.txt
@@ -51,6 +50,9 @@ some dealers said there were growing signs the united states wanted the dollar t
 since last august smart has been leading talks to open up japan to purchases of more u . s .- made automotive parts .
 the resulting association will operate under the name of charter and will be based in bristol .
 ```
+
+Fully-duplicate documents in `reuters.txt` are removed because they are noisy in evaluation of similarity searches.
+To do this, the output lines are shuffled, and your file will not be the identical to the example.
 
 ### 2. Finding all pairs of similar documents
 
@@ -97,15 +99,15 @@ Pairs of similar documents (indicated by zero-origin line numbers) and their dis
 ```
 $ head result-jaccard.csv
 i,j,dist
-31,1357,0.03125
-103,50206,0.05859375
-308,51423,0.00390625
-371,47578,0.05078125
-403,5338,0.0703125
-839,20916,0.08984375
-839,43949,0.09375
+31,1357,0.05859375
+173,49999,0.05078125
+286,19892,0.07421875
+308,51423,0.015625
+371,47578,0.03125
+403,5338,0.0859375
+792,48327,0.078125
 839,50322,0.09765625
-1250,43620,0.09765625
+1250,43620,0.08984375
 ```
 
 #### 2.2 Cosine space
@@ -134,14 +136,14 @@ Pairs of similar documents (indicated by zero-origin line numbers) and their dis
 $ head result-cosine.csv
 i,j,dist
 31,1357,0.11328125
-93,38484,0.14453125
-103,50206,0.14453125
-173,49999,0.09375
-286,22746,0.1484375
+173,49999,0.10546875
 308,51423,0.12890625
-371,47578,0.08984375
-448,27050,0.1171875
-988,49397,0.12109375
+371,47578,0.06640625
+448,27050,0.08203125
+457,18390,0.140625
+792,48327,0.1484375
+806,43538,0.140625
+844,30595,0.11328125
 ```
 
 ### 3. Printing similar documents
@@ -153,19 +155,22 @@ run the following command.
 
 ```
 $ cargo run --release -p find-simdoc --bin dump -- -i reuters.txt -s result-jaccard.csv
-[i=31,j=1357,dist=0.03125]
+[i=31,j=1357,dist=0.05859375]
 the january fall came after a strong 6 . 4 pct rise from november ' s rate of 1 . 774 mln units and brought completions to 6 . 7 pct above the january , 1986 , level of 1 . 765 mln units .
 the january fall came after a strong 6 . 4 pct rise from november ' s rate of 1 . 774 mln units and brought completions to 6 . 7 pct above the january , 1986 level of 1 . 765 mln units .
-[i=103,j=50206,dist=0.05859375]
-the terms of the transaction were not disclosed .
-terms of the transaction were not disclosed .
-[i=308,j=51423,dist=0.00390625]
+[i=173,j=49999,dist=0.05078125]
+rio de janeiro dockers strike over wages rio de janeiro ' s 3 , 500 dockworkers went on strike for an indefinite period today to demand wage increases , a spokesman for the dockers said .
+rio de janeiro dockers strike rio de janeiro ' s 3 , 500 dockworkers went on strike for an indefinite period today to demand wage increases , a spokesman for the dockers said .
+[i=286,j=19892,dist=0.07421875]
+u . s . first time jobless claims rose in week new applications for unemployment insurance benefits rose to a seasonally adjusted 355 , 000 in the week ended march 21 from 341 , 000 in the prior week , the labor department said .
+u . s . first time jobless claims rose in week new applications for unemployment insurance benefits rose to a seasonally adjusted 341 , 000 in the week ended march 14 from 340 , 000 in the prior week , the labor department said .
+[i=308,j=51423,dist=0.015625]
 nigeria changes auction rules to defend naira nigeria ' s central bank has changed the rules governing its foreign exchange auctions in what analysts see as a means of defending the naira currency , which has depreciated steadily .
 nigeria changes auction rules to defend the naira nigeria ' s central bank has changed the rules governing its foreign exchange auctions in what analysts see as a means of defending the naira currency , which has depreciated steadily .
-[i=371,j=47578,dist=0.05078125]
+[i=371,j=47578,dist=0.03125]
 " the administration should communicate to the european community the message that the united states will view the establishment of such a tax as inconsistent with the european community ' s obligations under the general agreement on tariffs and trade that will result in the adoption of strong and immediate countermeasures ," the resolution stated .
 " the administration should communciate to the european community the message that the united states will view the establishment of such a tax as inconsistent with the european community ' s obligations under the general agreement on tariffs and trade that will result in the adoption of strong and immediate countermeasures ," the resolution stated .
-[i=403,j=5338,dist=0.0703125]
+[i=403,j=5338,dist=0.0859375]
 he forecast the chancellor ' s budget tax cuts would increase consumer expediture on imported goods .
 he forecast the chancellor ' s budget tax cuts would increase consumer expenditure on imported goods .
 ...
@@ -202,15 +207,15 @@ It can be seen that the accuracy improves as the number of dimensions increases.
 ```
 $ cat acc.csv
 num_chunks,dimensions,mean_absolute_error,precision_0.1,recall_0.1,f1_0.1,precision_0.2,recall_0.2,f1_0.2,precision_0.5,recall_0.5,f1_0.5
-1,64,0.09972537437237405,1,1,1,0.625,0.625,0.625,0.03211517165005537,0.8529411764705882,0.06189967982924226
-2,128,0.07052296973405586,0.5,1,0.6666666666666666,0.8888888888888888,1,0.9411764705882353,0.4918032786885246,0.8823529411764706,0.631578947368421
-3,192,0.05751656913141833,1,1,1,1,1,1,0.64,0.9411764705882353,0.7619047619047621
-4,256,0.04982849325026314,0.5,1,0.6666666666666666,1,1,1,0.775,0.9117647058823529,0.8378378378378379
+1,64,0.09996782775866102,0.5,1,0.6666666666666666,0.8,0.5714285714285714,0.6666666666666666,0.02139917695473251,0.7647058823529411,0.04163330664531626
+2,128,0.07069611162104494,1,1,1,0.8333333333333334,0.7142857142857143,0.7692307692307692,0.47368421052631576,0.7941176470588235,0.5934065934065933
+3,192,0.05776715360376704,1,1,1,0.8333333333333334,0.7142857142857143,0.7692307692307692,0.6304347826086957,0.8529411764705882,0.725
+4,256,0.049919892543492474,1,1,1,1,0.7142857142857143,0.8333333333333333,0.8181818181818182,0.7941176470588235,0.8059701492537314
 ...
-97,6208,0.010130865555891795,1,1,1,1,0.875,0.9333333333333333,0.9705882352941176,0.9705882352941176,0.9705882352941176
-98,6272,0.010082881988136316,1,1,1,1,1,1,0.9705882352941176,0.9705882352941176,0.9705882352941176
-99,6336,0.010028083445355935,1,1,1,1,1,1,0.9705882352941176,0.9705882352941176,0.9705882352941176
-100,6400,0.009977773851440245,1,1,1,1,1,1,0.9705882352941176,0.9705882352941176,0.9705882352941176
+97,6208,0.0101065034709229,1,1,1,1,1,1,1,0.9705882352941176,0.9850746268656716
+98,6272,0.010056169962171922,1,1,1,1,1,1,1,0.9705882352941176,0.9850746268656716
+99,6336,0.01000512597491915,1,1,1,1,1,1,1,0.9705882352941176,0.9850746268656716
+100,6400,0.00995601577231552,1,1,1,1,1,1,1,0.9705882352941176,0.9850746268656716
 ```
 
 ## Disclaimer
