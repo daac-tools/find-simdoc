@@ -174,7 +174,7 @@ The executable `minhash_acc` allows you to examine
 - F1s for search radii {0.1, 0.2, 0.5}.
 
 To use this executable, we recommend extracting a small subset from your dataset
-because it exactly computes distances for all possible pairs and maintains a large amount of data in memory.
+because it exactly computes distances for all possible pairs and maintains a large amount of data in main memory.
 
 ```
 $ head -5000 reuters.txt > reuters.5k.txt
