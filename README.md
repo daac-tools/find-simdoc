@@ -11,6 +11,13 @@ This software provides fast all-pair similarity searches in documents.
 - Output
   - All pairs of similar document ids $R = \\{ (i,j): i < j, \delta(d_i, d_j) \leq r \\}$
 
+## Features
+
+- **Easy to use:** This software supports essential steps of document similarity search, from feature extraction to output of similar pairs. Therefore, you can immediately try the fast all-pair similarity search using your document files.
+- **Flexible tokenization:** You can specify any delimiter when splitting words in tokenization. This can be useful in languages where multiple definitions of words exist, such as Japanese or Chinese.
+- **Time- and memory-efficient:** The time and space complexities are *linear* over the numbers of input documents and output results.
+- **Pure Rust:** This software is implemented in Rust, achieving safe and fast performance.
+
 ## Running example
 
 Here, we describe the basic usage of this software through a running example.
@@ -61,7 +68,7 @@ The approach consists of three steps:
 Note that the current version supports only set representations in Step 1.
 Supporting weighting approaches such as TF-IDF is the future work.
 
-#### Jaccard space
+#### 2.1 Jaccard space
 
 The executable `jaccard` provides a similarity search in the [Jaccard space](https://en.wikipedia.org/wiki/Jaccard_index).
 You can check the arguments with the following command.
@@ -101,7 +108,7 @@ i,j,dist
 1250,43620,0.09765625
 ```
 
-#### Cosine space
+#### 2.2 Cosine space
 
 The executable `cosine` provides a similarity search in the [Cosine space](https://en.wikipedia.org/wiki/Cosine_similarity).
 You can check the arguments with the following command.
@@ -167,40 +174,43 @@ he forecast the chancellor ' s budget tax cuts would increase consumer expenditu
 ### 4. Testing the accuracy of 1-bit minwise hashing
 
 LSH is an approximate solution, and you may want to know the accuracy.
-The executable `minhash_mae` allows you to examine the *mean absolute error (MAE)*,
-the averaged gap between the normalized Hamming distance and the actual Jaccard distance.
+The executable `minhash_acc` allows you to examine
+- the *mean absolute error* that is the averaged gap between the normalized Hamming distance and the actual Jaccard distance,
+- the precisions for search radii {0.1, 0.2, 0.5},
+- the recalls for search radii {0.1, 0.2, 0.5}, and
+- the F1-scores for search radii {0.1, 0.2, 0.5}.
 
 To use this executable, we recommend extracting a small subset from your dataset
-because it exactly computes distances for all possible pairs and maintains a large amount of data in memory.
+because it exactly computes distances for all possible pairs and maintains a large amount of data in main memory.
 
 ```
-$ head -1000 reuters.txt > reuters.1k.txt
+$ head -5000 reuters.txt > reuters.5k.txt
 ```
 
-You can examine MAEs for the number of Hamming dimensions from 64 to 6400
+You can test the number of Hamming dimensions from 64 to 6400
 (i.e., the number of chunks from 1 to 100 indicated with `-c`)
 with the following command.
-The parameters for feature extraction is the same as those of `jaccard`.
+The arguments for feature extraction are the same as those of `jaccard`.
 
 ```
-$ cargo run --release -p find-simdoc --bin minhash_mae -- -i reuters.1k.txt -w 5 > mae.csv
+$ cargo run --release -p find-simdoc --bin minhash_acc -- -i reuters.5k.txt -w 5 > acc.csv
 ```
 
-The MAEs will be reported as follows.
+The statistics will be reported as follows.
 It can be seen that the accuracy improves as the number of dimensions increases.
 
 ```
-$ cat mae.csv
-num_chunks,dimensions,mean_absolute_error
-1,64,0.09974628492462442
-2,128,0.07050781338677266
-3,192,0.05761297836012548
-4,256,0.049865352075419325
+$ cat acc.csv
+num_chunks,dimensions,mean_absolute_error,precision_0.1,recall_0.1,f1_0.1,precision_0.2,recall_0.2,f1_0.2,precision_0.5,recall_0.5,f1_0.5
+1,64,0.09972537437237405,1,1,1,0.625,0.625,0.625,0.03211517165005537,0.8529411764705882,0.06189967982924226
+2,128,0.07052296973405586,0.5,1,0.6666666666666666,0.8888888888888888,1,0.9411764705882353,0.4918032786885246,0.8823529411764706,0.631578947368421
+3,192,0.05751656913141833,1,1,1,1,1,1,0.64,0.9411764705882353,0.7619047619047621
+4,256,0.04982849325026314,0.5,1,0.6666666666666666,1,1,1,0.775,0.9117647058823529,0.8378378378378379
 ...
-97,6208,0.010101573974127143
-98,6272,0.010049751534166197
-99,6336,0.009999685515430031
-100,6400,0.009950974569090776
+97,6208,0.010130865555891795,1,1,1,1,0.875,0.9333333333333333,0.9705882352941176,0.9705882352941176,0.9705882352941176
+98,6272,0.010082881988136316,1,1,1,1,1,1,0.9705882352941176,0.9705882352941176,0.9705882352941176
+99,6336,0.010028083445355935,1,1,1,1,1,1,0.9705882352941176,0.9705882352941176,0.9705882352941176
+100,6400,0.009977773851440245,1,1,1,1,1,1,0.9705882352941176,0.9705882352941176,0.9705882352941176
 ```
 
 ## Disclaimer

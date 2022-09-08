@@ -1,4 +1,5 @@
 use std::error::Error;
+use std::fmt::Write as _;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
@@ -7,6 +8,7 @@ use std::time::Instant;
 use clap::Parser;
 use find_simdoc::feature::{FeatureConfig, FeatureExtractor};
 use hamming_join::sketch::Sketch;
+use hashbrown::HashSet;
 use lsh::minhash::MinHasher;
 use rand::{RngCore, SeedableRng};
 
@@ -128,25 +130,62 @@ fn main() -> Result<(), Box<dyn Error>> {
         jac_dists
     };
 
-    eprintln!("Computing Hamming distances...");
+    let radii = vec![0.1, 0.2, 0.5];
+    let mut header = "num_chunks,dimensions,mean_absolute_error".to_string();
+    for &r in &radii {
+        write!(header, ",precision_{r}")?;
+        write!(header, ",recall_{r}")?;
+        write!(header, ",f1_{r}")?;
+    }
+    println!("{header}");
+
+    eprintln!("Computing accuracy...");
     let start = Instant::now();
 
-    println!("num_chunks,dimensions,mean_absolute_error");
     for num_chunks in 1..=MAX_CHUNKS {
+        eprintln!("Processed {}/{}...", num_chunks, MAX_CHUNKS);
+
         let mut sum_error = 0.;
+        let mut true_results: Vec<_> = (0..radii.len()).map(|_| HashSet::new()).collect();
+        let mut appx_results: Vec<_> = (0..radii.len()).map(|_| HashSet::new()).collect();
+
         let mut jac_dist_iter = jac_dists.iter();
         for i in 0..sketches.len() {
             let x = &sketches[i];
-            for y in sketches.iter().skip(i + 1) {
+            for (j, y) in sketches.iter().enumerate().skip(i + 1) {
                 let jac_dist = *jac_dist_iter.next().unwrap();
                 let ham_dist = hamming_distance(&x[..num_chunks], &y[..num_chunks]);
                 sum_error += (jac_dist - ham_dist).abs();
+                for (k, &r) in radii.iter().enumerate() {
+                    if jac_dist <= r {
+                        true_results[k].insert((i, j));
+                    }
+                    if ham_dist <= r {
+                        appx_results[k].insert((i, j));
+                    }
+                }
             }
         }
         assert_eq!(jac_dist_iter.next(), None);
+
         let dim = num_chunks * 64;
         let mae = sum_error / jac_dists.len() as f64;
-        println!("{num_chunks},{dim},{mae}");
+
+        let mut prf = vec![];
+        for (tr, ar) in true_results.iter().zip(appx_results.iter()) {
+            let true_positive = tr.intersection(ar).count() as f64;
+            let false_positive = ar.len() as f64 - true_positive;
+            let false_negative = tr.len() as f64 - true_positive;
+            let precision = true_positive / (true_positive + false_positive);
+            let recall = true_positive / (true_positive + false_negative);
+            let f1 = (2. * precision * recall) / (precision + recall);
+            prf.push((precision, recall, f1));
+        }
+        let mut body = format!("{num_chunks},{dim},{mae}");
+        for (p, r, f) in prf {
+            write!(body, ",{p},{r},{f}")?;
+        }
+        println!("{body}");
     }
     let duration = start.elapsed();
     eprintln!("Computed in {} sec", duration.as_secs_f64());
