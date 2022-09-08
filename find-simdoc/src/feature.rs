@@ -5,6 +5,8 @@ use fasthash::{CityHasher, FastHasher};
 
 use crate::shingling::ShingleIter;
 
+const BOS_FEATURE: u64 = 0;
+
 #[derive(Clone, Copy, Debug)]
 pub struct FeatureConfig {
     window_size: usize,
@@ -55,6 +57,9 @@ impl FeatureExtractor {
         let text = text.as_ref();
 
         feature.clear();
+        for _ in 1..self.config.window_size {
+            feature.push(BOS_FEATURE);
+        }
         if self.config.delimiter.is_none() && self.config.window_size == 1 {
             // The simplest case.
             text.chars().for_each(|c| feature.push(c as u64));
@@ -63,6 +68,9 @@ impl FeatureExtractor {
             for ranges in ShingleIter::new(&self.token_ranges, self.config.window_size) {
                 feature.push(self.config.hash(ranges.iter().cloned().map(|r| &text[r])));
             }
+        }
+        for _ in 1..self.config.window_size {
+            feature.push(BOS_FEATURE);
         }
     }
 
@@ -73,6 +81,9 @@ impl FeatureExtractor {
         let text = text.as_ref();
 
         feature.clear();
+        for _ in 1..self.config.window_size {
+            feature.push((BOS_FEATURE, 0.));
+        }
         if self.config.delimiter.is_none() && self.config.window_size == 1 {
             // The simplest case.
             text.chars().for_each(|c| {
@@ -87,6 +98,9 @@ impl FeatureExtractor {
                 let w = 1.;
                 feature.push((f, w))
             }
+        }
+        for _ in 1..self.config.window_size {
+            feature.push((BOS_FEATURE, 0.));
         }
     }
 
@@ -146,9 +160,11 @@ mod tests {
         assert_eq!(
             feature,
             vec![
+                0,
                 config.hash(&["a", "b"]),
                 config.hash(&["b", "c"]),
                 config.hash(&["c", "d"]),
+                0,
             ]
         )
     }
@@ -164,7 +180,14 @@ mod tests {
         extractor.extract(text, &mut feature);
         assert_eq!(
             feature,
-            vec![config.hash(&["a", "b", "c"]), config.hash(&["b", "c", "d"]),]
+            vec![
+                0,
+                0,
+                config.hash(&["a", "b", "c"]),
+                config.hash(&["b", "c", "d"]),
+                0,
+                0,
+            ]
         )
     }
 
@@ -198,7 +221,12 @@ mod tests {
         extractor.extract(text, &mut feature);
         assert_eq!(
             feature,
-            vec![config.hash(&["abc", "de"]), config.hash(&["de", "fgh"]),]
+            vec![
+                0,
+                config.hash(&["abc", "de"]),
+                config.hash(&["de", "fgh"]),
+                0,
+            ]
         )
     }
 
@@ -211,6 +239,9 @@ mod tests {
         let mut feature = vec![];
 
         extractor.extract(text, &mut feature);
-        assert_eq!(feature, vec![config.hash(&["abc", "de", "fgh"])])
+        assert_eq!(
+            feature,
+            vec![0, 0, config.hash(&["abc", "de", "fgh"]), 0, 0]
+        )
     }
 }
