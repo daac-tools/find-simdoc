@@ -11,6 +11,13 @@ This software provides fast all-pair similarity searches in documents.
 - Output
   - All pairs of similar document ids $R = \\{ (i,j): i < j, \delta(d_i, d_j) \leq r \\}$
 
+## Features
+
+- **Easy to use:** This software supports essential steps of document similarity search, from feature extraction to output of similar pairs. Therefore, you can immediately try the fast all-pair similarity search using your document files.
+- **Flexible tokenization:** You can specify any delimiter when splitting words in tokenization. This can be useful in languages where multiple definitions of words exist, such as Japanese or Chinese.
+- **Time- and memory-efficient:** The time and space complexities are *linear* over the numbers of input documents and output results.
+- **Pure Rust:** This software is implemented in Rust, achieving safe and fast performance.
+
 ## Running example
 
 Here, we describe the basic usage of this software through a running example.
