@@ -51,7 +51,7 @@ where
 
         let mut matched = vec![];
         for i in 0..self.sketches.len() {
-            if self.shows_progress && (i + 1) % 100 == 0 {
+            if self.shows_progress && (i + 1) % 1000 == 0 {
                 eprintln!(
                     "[SimpleJoiner::similar_pairs] Processed {}/{}...",
                     i + 1,

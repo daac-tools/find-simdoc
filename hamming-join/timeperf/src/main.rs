@@ -3,10 +3,10 @@ use std::time::Instant;
 use hamming_join::chunked_join::ChunkedJoiner;
 use hamming_join::simple_join::SimpleJoiner;
 
-const TRIALS: usize = 1;
+const TRIALS: usize = 3;
 const SCALES: [usize; 4] = [1_000, 10_000, 100_000, 1_000_000];
-const CHUNKS: [usize; 3] = [4, 8, 16];
-const RADII: [f64; 4] = [0.01, 0.02, 0.05, 0.1];
+const CHUNKS: [usize; 3] = [4, 16, 64];
+const RADII: [f64; 3] = [0.01, 0.05, 0.1];
 
 macro_rules! timeperf_common {
     ($percent:expr, $name:expr, $method:ident, $sketches:ident, $radii:ident, $chunks:ident, $scales:ident) => {
