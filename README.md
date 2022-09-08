@@ -61,7 +61,7 @@ The approach consists of three steps:
 Note that the current version supports only set representations in Step 1.
 Supporting weighting approaches such as TF-IDF is the future work.
 
-#### Jaccard space
+### 2.1 Jaccard space
 
 The executable `jaccard` provides a similarity search in the [Jaccard space](https://en.wikipedia.org/wiki/Jaccard_index).
 You can check the arguments with the following command.
@@ -101,7 +101,7 @@ i,j,dist
 1250,43620,0.09765625
 ```
 
-#### Cosine space
+### 2.2 Cosine space
 
 The executable `cosine` provides a similarity search in the [Cosine space](https://en.wikipedia.org/wiki/Cosine_similarity).
 You can check the arguments with the following command.
