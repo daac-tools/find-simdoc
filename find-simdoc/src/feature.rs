@@ -92,7 +92,9 @@ impl FeatureExtractor {
 
     fn tokenize(&mut self, text: &str) {
         self.token_ranges.clear();
-
+        for _ in 1..self.config.window_size {
+            self.token_ranges.push(0..0); // BOS
+        }
         let mut offset = 0;
         if let Some(delim) = self.config.delimiter {
             while offset < text.len() {
@@ -111,6 +113,9 @@ impl FeatureExtractor {
                 self.token_ranges.push(offset..offset + len);
                 offset += len;
             }
+        }
+        for _ in 1..self.config.window_size {
+            self.token_ranges.push(text.len()..text.len()); // EOS
         }
     }
 }
@@ -146,9 +151,11 @@ mod tests {
         assert_eq!(
             feature,
             vec![
+                config.hash(&["", "a"]),
                 config.hash(&["a", "b"]),
                 config.hash(&["b", "c"]),
                 config.hash(&["c", "d"]),
+                config.hash(&["d", ""]),
             ]
         )
     }
@@ -164,7 +171,14 @@ mod tests {
         extractor.extract(text, &mut feature);
         assert_eq!(
             feature,
-            vec![config.hash(&["a", "b", "c"]), config.hash(&["b", "c", "d"]),]
+            vec![
+                config.hash(&["", "", "a"]),
+                config.hash(&["", "a", "b"]),
+                config.hash(&["a", "b", "c"]),
+                config.hash(&["b", "c", "d"]),
+                config.hash(&["c", "d", ""]),
+                config.hash(&["d", "", ""]),
+            ]
         )
     }
 
@@ -198,7 +212,12 @@ mod tests {
         extractor.extract(text, &mut feature);
         assert_eq!(
             feature,
-            vec![config.hash(&["abc", "de"]), config.hash(&["de", "fgh"]),]
+            vec![
+                config.hash(&["", "abc"]),
+                config.hash(&["abc", "de"]),
+                config.hash(&["de", "fgh"]),
+                config.hash(&["fgh", ""]),
+            ]
         )
     }
 
@@ -211,6 +230,15 @@ mod tests {
         let mut feature = vec![];
 
         extractor.extract(text, &mut feature);
-        assert_eq!(feature, vec![config.hash(&["abc", "de", "fgh"])])
+        assert_eq!(
+            feature,
+            vec![
+                config.hash(&["", "", "abc"]),
+                config.hash(&["", "abc", "de"]),
+                config.hash(&["abc", "de", "fgh"]),
+                config.hash(&["de", "fgh", ""]),
+                config.hash(&["fgh", "", ""]),
+            ]
+        )
     }
 }
