@@ -21,11 +21,11 @@ First of all, install `rustc` and `cargo` following the [official instructions](
 
 You have to prepare a text file containing documents line by line.
 
-To produce an example file used throughout this description, you can use `scripts/load_nltk_sents.py` that downloads the Reuters Corpus provided by NLTK.
+To produce an example file used throughout this description, you can use `scripts/load_nltk_dataset.py` that downloads the Reuters Corpus provided by NLTK.
 Run the following command.
 
 ```
-$ ./scripts/load_nltk_sents.py reuters
+$ ./scripts/load_nltk_dataset.py reuters
 ```
 
 `reuters.txt` will be output, in which fully-duplicate documents are removed because they are noisy in evaluation of similarity searches.
