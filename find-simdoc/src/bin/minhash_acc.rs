@@ -1,4 +1,5 @@
 use std::error::Error;
+use std::fmt::Write as _;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
@@ -132,9 +133,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     let radii = vec![0.1, 0.2, 0.5];
     let mut header = "num_chunks,dimensions,mean_absolute_error".to_string();
     for &r in &radii {
-        header.push_str(&format!(",precision_{r}"));
-        header.push_str(&format!(",recall_{r}"));
-        header.push_str(&format!(",f1_{r}"));
+        write!(header, ",precision_{r}")?;
+        write!(header, ",recall_{r}")?;
+        write!(header, ",f1_{r}")?;
     }
     println!("{header}");
 
@@ -171,9 +172,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         let mae = sum_error / jac_dists.len() as f64;
 
         let mut prf = vec![];
-        for (tr, ap) in true_results.iter().zip(appx_results.iter()) {
-            let true_positive = tr.intersection(ap).count() as f64;
-            let false_positive = ap.len() as f64 - true_positive;
+        for (tr, ar) in true_results.iter().zip(appx_results.iter()) {
+            let true_positive = tr.intersection(ar).count() as f64;
+            let false_positive = ar.len() as f64 - true_positive;
             let false_negative = tr.len() as f64 - true_positive;
             let precision = true_positive / (true_positive + false_positive);
             let recall = true_positive / (true_positive + false_negative);
@@ -182,7 +183,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
         let mut body = format!("{num_chunks},{dim},{mae}");
         for (p, r, f) in prf {
-            body.push_str(&format!(",{p},{r},{f}"));
+            write!(body, ",{p},{r},{f}")?;
         }
         println!("{body}");
     }
