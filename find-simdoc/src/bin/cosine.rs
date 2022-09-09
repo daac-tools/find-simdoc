@@ -64,36 +64,13 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let mut seeder =
         rand_xoshiro::SplitMix64::seed_from_u64(seed.unwrap_or_else(rand::random::<u64>));
-
-    let config = FeatureConfig::new(window_size, delimiter, seeder.next_u64());
-    let results = find_in_cosine(texts, radius, num_chunks, seeder.next_u64(), config)?;
-
-    println!("i,j,dist");
-    for (i, j, dist) in results {
-        println!("{i},{j},{dist}");
-    }
-
-    Ok(())
-}
-
-type SimPair = (usize, usize, f64);
-
-fn find_in_cosine<I, S>(
-    texts: I,
-    radius: f64,
-    num_chunks: usize,
-    seed: u64,
-    config: FeatureConfig,
-) -> Result<Vec<SimPair>, Box<dyn Error>>
-where
-    I: Iterator<Item = S>,
-    S: AsRef<str>,
-{
-    let hasher = SimHasher::new(seed);
-    let mut extractor = FeatureExtractor::new(config);
     let mut joiner = ChunkedJoiner::<u64>::new(num_chunks).shows_progress(true);
 
     {
+        let config = FeatureConfig::new(window_size, delimiter, seeder.next_u64());
+        let hasher = SimHasher::new(seeder.next_u64());
+        let mut extractor = FeatureExtractor::new(config);
+
         eprintln!("Converting sentences into sketches...");
         let start = Instant::now();
         let mut feature = vec![];
@@ -101,7 +78,6 @@ where
             if (i + 1) % 1000 == 0 {
                 eprintln!("Processed {} sentences...", i + 1);
             }
-            let text = text.as_ref();
             assert!(!text.is_empty());
             extractor.extract_with_weights(text, &mut feature);
             joiner.add(hasher.iter(&feature))?;
@@ -121,5 +97,10 @@ where
     let results = joiner.similar_pairs(radius);
     eprintln!("Done in {} sec", start.elapsed().as_secs_f64());
 
-    Ok(results)
+    println!("i,j,dist");
+    for (i, j, dist) in results {
+        println!("{i},{j},{dist}");
+    }
+
+    Ok(())
 }
