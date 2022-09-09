@@ -5,9 +5,9 @@ use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
 use std::time::Instant;
 
+use all_pairs_hamming::sketch::Sketch;
 use clap::Parser;
 use find_simdoc::feature::{FeatureConfig, FeatureExtractor};
-use hamming_join::sketch::Sketch;
 use hashbrown::HashSet;
 use lsh::minhash::MinHasher;
 use rand::{RngCore, SeedableRng};

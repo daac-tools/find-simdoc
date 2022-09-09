@@ -1,7 +1,7 @@
 use std::time::Instant;
 
-use hamming_join::chunked_join::ChunkedJoiner;
-use hamming_join::simple_join::SimpleJoiner;
+use all_pairs_hamming::chunked_join::ChunkedJoiner;
+use all_pairs_hamming::simple_join::SimpleJoiner;
 
 const TRIALS: usize = 3;
 const SCALES: [usize; 4] = [1_000, 10_000, 100_000, 1_000_000];

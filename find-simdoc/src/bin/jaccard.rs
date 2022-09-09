@@ -4,9 +4,9 @@ use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
 use std::time::Instant;
 
+use all_pairs_hamming::chunked_join::ChunkedJoiner;
 use clap::Parser;
 use find_simdoc::feature::{FeatureConfig, FeatureExtractor};
-use hamming_join::chunked_join::ChunkedJoiner;
 use lsh::minhash::MinHasher;
 use rand::{RngCore, SeedableRng};
 
