@@ -34,11 +34,11 @@ macro_rules! timeperf_common {
 }
 
 fn main() {
-    main_percent(50);
-    main_percent(80);
+    main_percent(50, false);
+    main_percent(80, false);
 }
 
-fn main_percent(percent: u64) {
+fn main_percent(percent: u64, test_simple: bool) {
     let max_chunks = *CHUNKS.last().unwrap();
     let max_sketches = *SCALES.last().unwrap();
 
@@ -67,7 +67,7 @@ fn main_percent(percent: u64) {
             scales
         );
     }
-    {
+    if test_simple {
         let radii = &RADII[..1];
         let chunks = &CHUNKS[..];
         let scales = &SCALES[..3];
