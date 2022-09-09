@@ -1,4 +1,4 @@
-# Finding similar documents
+# Finding all-pair similar documents
 
 This software provides fast all-pair similarity searches in documents.
 
