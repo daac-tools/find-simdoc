@@ -106,8 +106,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     let delimiter = args.delimiter;
     let window_size = args.window_size;
     let num_chunks = args.num_chunks;
-    let tf_opt = args.tf;
-    let idf_opt = args.idf;
+    let tf_kind = args.tf;
+    let idf_kind = args.idf;
     let seed = args.seed;
 
     if window_size == 0 {
@@ -123,7 +123,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         let hasher = SimHasher::new(seeder.next_u64());
         let mut extractor = FeatureExtractor::new(config);
 
-        let idf = match idf_opt {
+        let idf = match idf_kind {
             IdfWeights::Unary => None,
             IdfWeights::Standard | IdfWeights::Smooth => {
                 eprintln!("Building IDF...");
@@ -157,7 +157,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             }
             assert!(!text.is_empty());
             extractor.extract_with_weights(text, &mut feature);
-            match tf_opt {
+            match tf_kind {
                 TfWeights::Binary => {}
                 TfWeights::Standard => {
                     tf.tf(&mut feature);
@@ -166,7 +166,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                     tf.tf_sublinear(&mut feature);
                 }
             }
-            match idf_opt {
+            match idf_kind {
                 IdfWeights::Unary => {}
                 IdfWeights::Standard => {
                     let idf = idf.as_ref().unwrap();
