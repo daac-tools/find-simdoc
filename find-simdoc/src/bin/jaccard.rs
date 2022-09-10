@@ -1,6 +1,6 @@
 use std::error::Error;
 use std::fs::File;
-use std::io::{BufRead, BufReader};
+use std::io::{BufRead, BufReader, Read};
 use std::path::PathBuf;
 use std::time::Instant;
 
@@ -58,10 +58,6 @@ fn main() -> Result<(), Box<dyn Error>> {
         return Err("window_size must not be 0.".into());
     }
 
-    let texts = BufReader::new(File::open(document_path)?)
-        .lines()
-        .map(|line| line.unwrap());
-
     let mut seeder =
         rand_xoshiro::SplitMix64::seed_from_u64(seed.unwrap_or_else(rand::random::<u64>));
     let mut joiner = ChunkedJoiner::<u64>::new(num_chunks).shows_progress(true);
@@ -74,6 +70,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         eprintln!("Converting sentences into sketches...");
         let start = Instant::now();
+        let texts = texts_iter(File::open(&document_path)?);
         let mut feature = vec![];
         for (i, text) in texts.enumerate() {
             if (i + 1) % 1000 == 0 {
@@ -108,4 +105,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 
     Ok(())
+}
+
+fn texts_iter<R>(rdr: R) -> impl Iterator<Item = String>
+where
+    R: Read,
+{
+    BufReader::new(rdr).lines().map(|line| line.unwrap())
 }
