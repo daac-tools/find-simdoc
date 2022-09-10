@@ -232,7 +232,7 @@ As expected, the larger the number, the higher the accuracy. For example, when t
 
 ### F1 score
 
-The following figure shows F1 scores in search with radii 0.1, 0.2, and 0.5 (indicated with the command line argument `-r`).
+The following figure shows F1 scores in search with radii 0.1, 0.2, and 0.5 (indicated with the argument `-r`).
 
 ![](./figures/f1_reuters5k.svg)
 
