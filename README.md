@@ -178,7 +178,7 @@ he forecast the chancellor ' s budget tax cuts would increase consumer expenditu
 
 LSH is an approximate solution, and you may want to know the accuracy.
 The executable `minhash_acc` allows you to examine
-- the *mean absolute error* that is the averaged gap between the normalized Hamming distance and the actual Jaccard distance,
+- the *mean absolute error* that is the averaged gap between the normalized Hamming distance and the actual Jaccard distance (see [below](#mean-absolute-error-mae) for the specific definition),
 - the precisions for search radii {0.1, 0.2, 0.5},
 - the recalls for search radii {0.1, 0.2, 0.5}, and
 - the F1-scores for search radii {0.1, 0.2, 0.5}.
@@ -215,6 +215,37 @@ num_chunks,dimensions,mean_absolute_error,precision_0.1,recall_0.1,f1_0.1,precis
 99,6336,0.01000512597491915,1,1,1,1,1,1,1,0.9705882352941176,0.9850746268656716
 100,6400,0.00995601577231552,1,1,1,1,1,1,1,0.9705882352941176,0.9850746268656716
 ```
+
+## Approximation accuracy of 1-bit minwise hashing
+
+LSH is an approximation solution, and the number of dimensions in the Hamming space
+(indicated with the command line argument -c) is related to the approximation accuracy.
+
+### Mean absolute error (MAE)
+
+We show an experimental result for gaps between the normalized Hamming distance and the actual Jaccard distance.
+Let $X=(x_1,x_2,\dots,x_n)$ be a sequence of $n$ feature vectors and $Y=(y_1,y_2,\dots.y_n)$ be a sequence of corresponding sketches.
+We measure the mean absolute errors (MAEs) as the approximation gap, defined by
+$$
+\frac{\sum_{(i,j) \in N} |J(x_i,x_j) - H(y_i,y_j)|}{|N|}
+$$
+where $N=\{ (i,j) \in [n]\times[n] : i<j \}$, $J(\cdot,\cdot)$ is the Jaccard distance, and $H(\cdot,\cdot)$ is the normalized Hamming distance.
+
+We tested randomly sampled 1000 documents from the Reuters Corpus provided by NLTK. A feature vector was a set representation of character 5-grams.
+
+The following figure shows MAEs while varying the number of Hamming dimensions from 64 to 6400 (i.e., the number of chunks from 1 to 100 indicated with `-c`).
+
+![](./figures/mae_reuters5k.svg)
+
+As expected, the larger the number, the higher the accuracy. For example, when the number of dimensions is 1024 (setting the argument -c to 128), we achieve the MAE around 2.5%.
+
+### F1 score
+
+We then show the F1 scores in search with radii 0.1, 0.2, and 0.5 (indicated with the command line argument -r). The other experimental settings are the same. The following figure shows the results.
+
+![](./figures/f1_reuters5k.svg)
+
+For a small radius -r 0.1, short sketches are enough to obtain high F1 scores. Setting at least -c 2 achieves the perfect F1 score. For larger radii, when the number of dimensions is 1024 (setting the argument -c to 128), we achieve the score around 90%.
 
 ## Disclaimer
 
