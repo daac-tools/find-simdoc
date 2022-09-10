@@ -4,11 +4,9 @@ use std::io::{BufRead, BufReader, Read};
 use std::path::PathBuf;
 use std::time::Instant;
 
-use all_pairs_hamming::chunked_join::ChunkedJoiner;
 use clap::Parser;
-use find_simdoc::feature::{FeatureConfig, FeatureExtractor};
-use lsh::minhash::MinHasher;
-use rand::{RngCore, SeedableRng};
+
+use find_simdoc::jaccard::JaccardSearcher;
 
 #[derive(Parser, Debug)]
 #[clap(
@@ -58,33 +56,18 @@ fn main() -> Result<(), Box<dyn Error>> {
         return Err("window_size must not be 0.".into());
     }
 
-    let mut seeder =
-        rand_xoshiro::SplitMix64::seed_from_u64(seed.unwrap_or_else(rand::random::<u64>));
-    let mut joiner = ChunkedJoiner::<u64>::new(num_chunks).shows_progress(true);
+    let mut searcher = JaccardSearcher::new(window_size, delimiter, seed).shows_progress(true);
 
-    // TODO: Multi-threading.
     {
-        let config = FeatureConfig::new(window_size, delimiter, seeder.next_u64());
-        let hasher = MinHasher::new(seeder.next_u64());
-        let mut extractor = FeatureExtractor::new(config);
-
-        eprintln!("Converting sentences into sketches...");
+        eprintln!("Converting documents into sketches...");
         let start = Instant::now();
-        let texts = texts_iter(File::open(&document_path)?);
-        let mut feature = vec![];
-        for (i, text) in texts.enumerate() {
-            if (i + 1) % 1000 == 0 {
-                eprintln!("Processed {} sentences...", i + 1);
-            }
-            assert!(!text.is_empty());
-            extractor.extract(text, &mut feature);
-            joiner.add(hasher.iter(&feature))?;
-        }
+        let documents = texts_iter(File::open(&document_path)?);
+        searcher = searcher.build_sketches(documents, num_chunks);
         let duration = start.elapsed();
-        let memory_in_bytes = joiner.memory_in_bytes() as f64;
+        let memory_in_bytes = searcher.memory_in_bytes() as f64;
         eprintln!(
             "Produced {} sketches in {} sec, consuming {} MiB",
-            joiner.num_sketches(),
+            searcher.len(),
             duration.as_secs_f64(),
             memory_in_bytes / (1024. * 1024.)
         );
@@ -92,11 +75,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     eprintln!("Finding all similar pairs in sketches...");
     let start = Instant::now();
-    // In 1-bit minhash, the collision probability is multiplied by 2 over the original.
-    // Thus, we should search with the half of the actual radius.
-    let mut results = joiner.similar_pairs(radius / 2.);
-    // Modifies the distances.
-    results.iter_mut().for_each(|(_, _, d)| *d *= 2.);
+    let results = searcher.search_similar_pairs(radius);
     eprintln!("Done in {} sec", start.elapsed().as_secs_f64());
 
     println!("i,j,dist");
