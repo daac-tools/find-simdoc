@@ -228,7 +228,7 @@ The following figure shows MAEs while varying the number of Hamming dimensions f
 
 ![](./figures/mae_reuters5k.svg)
 
-As expected, the larger the number, the higher the accuracy. For example, when the number of dimensions is 1024 (setting the argument `-c to 128`), we achieve the MAE around 2.5%.
+As expected, the larger the number, the higher the accuracy. For example, when the number of dimensions is 1024 (setting the argument `-c 128`), we achieve the MAE around 2.5%.
 
 ### F1 score
 
