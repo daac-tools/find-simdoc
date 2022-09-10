@@ -4,4 +4,5 @@ members = [
     "all-pairs-hamming",
     "all-pairs-hamming/timeperf",
     "find-simdoc",
+    "find-simdoc-cli",
 ]
