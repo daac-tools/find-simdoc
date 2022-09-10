@@ -82,7 +82,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             eprintln!("Building IDF...");
             let start = Instant::now();
             let documents = texts_iter(File::open(&document_path)?);
-            searcher = searcher.idf(idf_weight, Some(documents));
+            searcher = searcher.idf(idf_weight, Some(documents))?;
             let duration = start.elapsed();
             eprintln!("Produced in {} sec", duration.as_secs_f64(),);
         }

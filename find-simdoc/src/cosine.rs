@@ -1,5 +1,7 @@
+use crate::errors::{FindSimdocError, Result};
 use crate::feature::{FeatureConfig, FeatureExtractor};
 use crate::tfidf::{Idf, Tf};
+
 use all_pairs_hamming::chunked_join::ChunkedJoiner;
 use lsh::simhash::SimHasher;
 use rand::{RngCore, SeedableRng};
@@ -80,7 +82,7 @@ impl CosineSearcher {
         self
     }
 
-    pub fn idf<I, D>(mut self, idf_weight: IdfWeights, documents: Option<I>) -> Self
+    pub fn idf<I, D>(mut self, idf_weight: IdfWeights, documents: Option<I>) -> Result<Self>
     where
         I: IntoIterator<Item = D>,
         D: AsRef<str>,
@@ -88,20 +90,28 @@ impl CosineSearcher {
         match idf_weight {
             IdfWeights::Unary => {}
             IdfWeights::Standard | IdfWeights::Smooth => {
-                let mut extractor = FeatureExtractor::new(self.config);
-                let mut idf = Idf::new();
-                let mut feature = vec![];
-                for doc in documents.unwrap() {
-                    let doc = doc.as_ref();
-                    assert!(!doc.is_empty());
-                    extractor.extract(doc, &mut feature);
-                    idf.add(&feature);
+                if let Some(documents) = documents {
+                    let mut extractor = FeatureExtractor::new(self.config);
+                    let mut idf = Idf::new();
+                    let mut feature = vec![];
+                    for doc in documents {
+                        let doc = doc.as_ref();
+                        if doc.is_empty() {
+                            return Err(FindSimdocError::input(
+                                "Input document must not be empty.",
+                            ));
+                        }
+                        extractor.extract(doc, &mut feature);
+                        idf.add(&feature);
+                    }
+                    self.idf = Some(idf);
+                } else {
+                    return Err(FindSimdocError::input("Input document must not be empty."));
                 }
-                self.idf = Some(idf);
             }
         }
         self.idf_weight = idf_weight;
-        self
+        Ok(self)
     }
 
     pub fn build_sketches<I, D>(mut self, documents: I, num_chunks: usize) -> Self

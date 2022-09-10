@@ -1,4 +1,6 @@
+use crate::errors::{FindSimdocError, Result};
 use crate::feature::{FeatureConfig, FeatureExtractor};
+
 use all_pairs_hamming::chunked_join::ChunkedJoiner;
 use lsh::minhash::MinHasher;
 use rand::{RngCore, SeedableRng};
@@ -29,7 +31,7 @@ impl JaccardSearcher {
         self
     }
 
-    pub fn build_sketches<I, D>(mut self, documents: I, num_chunks: usize) -> Self
+    pub fn build_sketches<I, D>(mut self, documents: I, num_chunks: usize) -> Result<Self>
     where
         I: IntoIterator<Item = D>,
         D: AsRef<str>,
@@ -42,21 +44,27 @@ impl JaccardSearcher {
                 eprintln!("Processed {} documents...", i + 1);
             }
             let doc = doc.as_ref();
-            assert!(!doc.is_empty());
+            if doc.is_empty() {
+                return Err(FindSimdocError::input("Input document must not be empty."));
+            }
             extractor.extract(doc, &mut feature);
             joiner.add(self.hasher.iter(&feature)).unwrap();
         }
         self.joiner = Some(joiner);
-        self
+        Ok(self)
     }
 
     pub fn search_similar_pairs(&self, radius: f64) -> Vec<(usize, usize, f64)> {
-        // In 1-bit minhash, the collision probability is multiplied by 2 over the original.
-        // Thus, we should search with the half of the actual radius.
-        let mut results = self.joiner.as_ref().unwrap().similar_pairs(radius / 2.);
-        // Modifies the distances.
-        results.iter_mut().for_each(|(_, _, d)| *d *= 2.);
-        results
+        if let Some(joiner) = self.joiner.as_ref() {
+            // In 1-bit minhash, the collision probability is multiplied by 2 over the original.
+            // Thus, we should search with the half of the actual radius.
+            let mut results = joiner.similar_pairs(radius / 2.);
+            // Modifies the distances.
+            results.iter_mut().for_each(|(_, _, d)| *d *= 2.);
+            results
+        } else {
+            vec![]
+        }
     }
 
     pub fn len(&self) -> usize {
