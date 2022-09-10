@@ -1,10 +1,13 @@
+//! Feature extractor.
 use std::hash::{Hash, Hasher};
 use std::ops::Range;
 
 use fasthash::{CityHasher, FastHasher};
 
+use crate::errors::{FindSimdocError, Result};
 use crate::shingling::ShingleIter;
 
+/// Configuration of feature extraction.
 #[derive(Clone, Copy, Debug)]
 pub struct FeatureConfig {
     window_size: usize,
@@ -13,13 +16,23 @@ pub struct FeatureConfig {
 }
 
 impl FeatureConfig {
-    pub fn new(window_size: usize, delimiter: Option<char>, seed: u64) -> Self {
-        assert!(window_size >= 1);
-        Self {
+    /// Creates an instance.
+    ///
+    /// # Arguments
+    ///
+    /// * `window_size` - Window size for w-shingling in feature extraction (must be more than 0).
+    /// * `delimiter` - Delimiter for recognizing words as tokens in feature extraction.
+    ///                 If `None`, characters are used for tokens.
+    /// * `seed` - Seed value for random values.
+    pub fn new(window_size: usize, delimiter: Option<char>, seed: u64) -> Result<Self> {
+        if window_size == 0 {
+            return Err(FindSimdocError::input("Window size must not be 0."));
+        }
+        Ok(Self {
             window_size,
             delimiter,
             seed,
-        }
+        })
     }
 
     fn hash<I, T>(&self, iter: I) -> u64
@@ -35,12 +48,14 @@ impl FeatureConfig {
     }
 }
 
+/// Extractor of feature vectors.
 pub struct FeatureExtractor {
     config: FeatureConfig,
     token_ranges: Vec<Range<usize>>,
 }
 
 impl FeatureExtractor {
+    /// Creates an instance.
     pub const fn new(config: FeatureConfig) -> Self {
         Self {
             config,
@@ -48,6 +63,7 @@ impl FeatureExtractor {
         }
     }
 
+    /// Extracts a feature vector from an input text.
     pub fn extract<S>(&mut self, text: S, feature: &mut Vec<u64>)
     where
         S: AsRef<str>,
@@ -66,6 +82,7 @@ impl FeatureExtractor {
         }
     }
 
+    /// Extracts a feature vector from an input text with weights of 1.0.
     pub fn extract_with_weights<S>(&mut self, text: S, feature: &mut Vec<(u64, f64)>)
     where
         S: AsRef<str>,
@@ -126,7 +143,7 @@ mod tests {
 
     #[test]
     fn test_char_unigram() {
-        let config = FeatureConfig::new(1, None, 42);
+        let config = FeatureConfig::new(1, None, 42).unwrap();
         let mut extractor = FeatureExtractor::new(config);
 
         let text = "abcd";
@@ -141,7 +158,7 @@ mod tests {
 
     #[test]
     fn test_char_bigram() {
-        let config = FeatureConfig::new(2, None, 42);
+        let config = FeatureConfig::new(2, None, 42).unwrap();
         let mut extractor = FeatureExtractor::new(config);
 
         let text = "abcd";
@@ -162,7 +179,7 @@ mod tests {
 
     #[test]
     fn test_char_trigram() {
-        let config = FeatureConfig::new(3, None, 42);
+        let config = FeatureConfig::new(3, None, 42).unwrap();
         let mut extractor = FeatureExtractor::new(config);
 
         let text = "abcd";
@@ -184,7 +201,7 @@ mod tests {
 
     #[test]
     fn test_word_unigram() {
-        let config = FeatureConfig::new(1, Some(' '), 42);
+        let config = FeatureConfig::new(1, Some(' '), 42).unwrap();
         let mut extractor = FeatureExtractor::new(config);
 
         let text = "abc de fgh";
@@ -203,7 +220,7 @@ mod tests {
 
     #[test]
     fn test_word_bigram() {
-        let config = FeatureConfig::new(2, Some(' '), 42);
+        let config = FeatureConfig::new(2, Some(' '), 42).unwrap();
         let mut extractor = FeatureExtractor::new(config);
 
         let text = "abc de fgh";
@@ -223,7 +240,7 @@ mod tests {
 
     #[test]
     fn test_word_trigram() {
-        let config = FeatureConfig::new(3, Some(' '), 42);
+        let config = FeatureConfig::new(3, Some(' '), 42).unwrap();
         let mut extractor = FeatureExtractor::new(config);
 
         let text = "abc de fgh";

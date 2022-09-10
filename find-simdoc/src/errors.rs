@@ -1,10 +1,11 @@
+//! Error definitions.
 use std::error::Error;
 use std::{fmt, result};
 
 /// A specialized Result type for this library.
 pub type Result<T, E = FindSimdocError> = result::Result<T, E>;
 
-/// Errors in crawdad.
+/// Errors in this library.
 #[derive(Debug)]
 pub enum FindSimdocError {
     /// Contains [`InputError`].

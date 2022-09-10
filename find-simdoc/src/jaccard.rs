@@ -1,3 +1,4 @@
+//! Searcher for all-pair similar documents in the Jaccard space.
 use crate::errors::{FindSimdocError, Result};
 use crate::feature::{FeatureConfig, FeatureExtractor};
 
@@ -5,7 +6,16 @@ use all_pairs_hamming::chunked_join::ChunkedJoiner;
 use lsh::minhash::MinHasher;
 use rand::{RngCore, SeedableRng};
 
-/// Searcher in Jaccard space using 1-bit minwise hashing.
+/// Searcher for all-pair similar documents in the Jaccard space.
+///
+/// # Approach
+///
+/// The search steps consist of
+///
+/// 1. Extracts features from documents,
+///    where a feature is a set representation of character or word ngrams.
+/// 2. Convert the features into binary sketches through the [1-bit minwise hashing](https://arxiv.org/abs/0910.3349).
+/// 3. Search for similar sketches in the Hamming space using [`ChunkedJoiner`].
 pub struct JaccardSearcher {
     config: FeatureConfig,
     hasher: MinHasher,
@@ -23,12 +33,9 @@ impl JaccardSearcher {
     ///                 If `None`, characters are used for tokens.
     /// * `seed` - Seed value for random values.
     pub fn new(window_size: usize, delimiter: Option<char>, seed: Option<u64>) -> Result<Self> {
-        if window_size == 0 {
-            return Err(FindSimdocError::input("Window size must not be 0."));
-        }
         let seed = seed.unwrap_or_else(rand::random::<u64>);
         let mut seeder = rand_xoshiro::SplitMix64::seed_from_u64(seed);
-        let config = FeatureConfig::new(window_size, delimiter, seeder.next_u64());
+        let config = FeatureConfig::new(window_size, delimiter, seeder.next_u64())?;
         let hasher = MinHasher::new(seeder.next_u64());
         Ok(Self {
             config,

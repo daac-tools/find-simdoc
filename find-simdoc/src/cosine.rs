@@ -1,3 +1,4 @@
+//! Searcher for all-pair similar documents in the Cosine space.
 use crate::errors::{FindSimdocError, Result};
 use crate::feature::{FeatureConfig, FeatureExtractor};
 use crate::tfidf::{Idf, Tf};
@@ -6,7 +7,16 @@ use all_pairs_hamming::chunked_join::ChunkedJoiner;
 use lsh::simhash::SimHasher;
 use rand::{RngCore, SeedableRng};
 
-/// Searcher
+/// Searcher for all-pair similar documents in the Cosine space.
+///
+/// # Approach
+///
+/// The search steps consist of
+///
+/// 1. Extracts features from documents,
+///    where a feature is a tfidf-weighted vector representation of character or word ngrams.
+/// 2. Convert the features into binary sketches through the [simplified simhash](https://dl.acm.org/doi/10.1145/1242572.1242592).
+/// 3. Search for similar sketches in the Hamming space using [`ChunkedJoiner`].
 pub struct CosineSearcher {
     config: FeatureConfig,
     hasher: SimHasher,
@@ -26,12 +36,9 @@ impl CosineSearcher {
     ///                 If `None`, characters are used for tokens.
     /// * `seed` - Seed value for random values.
     pub fn new(window_size: usize, delimiter: Option<char>, seed: Option<u64>) -> Result<Self> {
-        if window_size == 0 {
-            return Err(FindSimdocError::input("Window size must not be 0."));
-        }
         let seed = seed.unwrap_or_else(rand::random::<u64>);
         let mut seeder = rand_xoshiro::SplitMix64::seed_from_u64(seed);
-        let config = FeatureConfig::new(window_size, delimiter, seeder.next_u64());
+        let config = FeatureConfig::new(window_size, delimiter, seeder.next_u64())?;
         let hasher = SimHasher::new(seeder.next_u64());
         Ok(Self {
             config,
