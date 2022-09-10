@@ -177,7 +177,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 IdfWeights::Smooth => {
                     let idf = idf.as_ref().unwrap();
                     for (term, weight) in feature.iter_mut() {
-                        *weight *= idf.smooth_idf(*term);
+                        *weight *= idf.idf_smooth(*term);
                     }
                 }
             }

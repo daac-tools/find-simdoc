@@ -42,7 +42,7 @@ where
         (n / m).log10() + 1.
     }
 
-    pub fn smooth_idf(&self, term: T) -> f64 {
+    pub fn idf_smooth(&self, term: T) -> f64 {
         let n = (self.num_docs + 1) as f64;
         let m = (*self.counter.get(&term).unwrap() + 1) as f64;
         (n / m).log10() + 1.
