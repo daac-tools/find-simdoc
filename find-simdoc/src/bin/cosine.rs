@@ -11,14 +11,14 @@ use find_simdoc::tfidf::{Idf, Tf};
 use clap::Parser;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum TfWeights {
+enum TfWeights {
     Binary,
     Standard,
     Sublinear,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum IdfWeights {
+enum IdfWeights {
     Unary,
     Standard,
     Smooth,
