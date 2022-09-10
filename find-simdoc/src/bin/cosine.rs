@@ -30,9 +30,9 @@ impl FromStr for TfWeights {
     type Err = &'static str;
     fn from_str(w: &str) -> Result<Self, Self::Err> {
         match w {
-            "binary" => Ok(TfWeights::Binary),
-            "standard" => Ok(TfWeights::Standard),
-            "sublinear" => Ok(TfWeights::Sublinear),
+            "binary" => Ok(Self::Binary),
+            "standard" => Ok(Self::Standard),
+            "sublinear" => Ok(Self::Sublinear),
             _ => Err("Could not parse a tf-weighting value"),
         }
     }
@@ -42,9 +42,9 @@ impl FromStr for IdfWeights {
     type Err = &'static str;
     fn from_str(w: &str) -> Result<Self, Self::Err> {
         match w {
-            "unary" => Ok(IdfWeights::Unary),
-            "standard" => Ok(IdfWeights::Standard),
-            "smooth" => Ok(IdfWeights::Smooth),
+            "unary" => Ok(Self::Unary),
+            "standard" => Ok(Self::Standard),
+            "smooth" => Ok(Self::Smooth),
             _ => Err("Could not parse a idf-weighting value"),
         }
     }
