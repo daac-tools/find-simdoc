@@ -24,7 +24,7 @@ impl FeatureConfig {
     /// * `delimiter` - Delimiter for recognizing words as tokens in feature extraction.
     ///                 If `None`, characters are used for tokens.
     /// * `seed` - Seed value for random values.
-    pub fn new(window_size: usize, delimiter: Option<char>, seed: u64) -> Result<Self> {
+    pub const fn new(window_size: usize, delimiter: Option<char>, seed: u64) -> Result<Self> {
         if window_size == 0 {
             return Err(FindSimdocError::input("Window size must not be 0."));
         }
