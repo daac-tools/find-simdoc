@@ -20,7 +20,7 @@ This software provides fast all-pair similarity searches in documents.
 
 ## Running example
 
-Here, we describe the basic usage of this software through a running example.
+Here, we describe the basic usage of this software through an example of running the CLI tool.
 
 First of all, install `rustc` and `cargo` following the [official instructions](https://www.rust-lang.org/tools/install) since this software is implemented in Rust.
 
@@ -56,7 +56,7 @@ To do this, the output lines are shuffled, and your file will not be the identic
 
 ### 2. Finding all pairs of similar documents
 
-The workspace `find-simdoc` provides CLI tools for fast all-pair similarity searches in documents.
+The workspace `find-simdoc-cli` provides CLI tools for fast all-pair similarity searches in documents.
 The approach consists of three steps:
 
 1. Extract features from documents
@@ -73,17 +73,17 @@ The executable `jaccard` provides a similarity search in the [Jaccard space](htt
 You can check the arguments with the following command.
 
 ```
-$ cargo run --release -p find-simdoc --bin jaccard -- --help
+$ cargo run --release -p find-simdoc-cli --bin jaccard -- --help
 ```
 
 Run the following command if you want to search for `reuters.txt` with
 
 - search radius `0.1`,
 - tokens of character `5`-grams, and
-- `8*64=512` dimensions in the Hamming space.
+- `15*64=960` dimensions in the Hamming space.
 
 ```
-$ cargo run --release -p find-simdoc --bin jaccard -- -i reuters.txt -r 0.1 -w 5 -c 8 > result-jaccard.csv
+$ cargo run --release -p find-simdoc-cli --bin jaccard -- -i reuters.txt -r 0.1 -w 5 -c 15 > result-jaccard.csv
 ```
 
 Argument `-c` indicates the number of dimensions in the Hamming space,
@@ -96,15 +96,15 @@ Pairs of similar documents (indicated by zero-origin line numbers) and their dis
 ```
 $ head result-jaccard.csv
 i,j,dist
-31,1357,0.05859375
-173,49999,0.05078125
-286,19892,0.07421875
-308,51423,0.015625
-371,47578,0.03125
-403,5338,0.0859375
-792,48327,0.078125
-839,50322,0.09765625
-1250,43620,0.08984375
+191,29637,0.07291666666666667
+199,38690,0.0375
+274,10048,0.07083333333333333
+294,27675,0.04791666666666667
+311,13812,0.04583333333333333
+361,50938,0.08958333333333333
+469,6360,0.035416666666666666
+546,10804,0.0875
+690,28281,0.0875
 ```
 
 #### 2.2 Cosine space
@@ -113,7 +113,7 @@ The executable `cosine` provides a similarity search in the [Cosine space](https
 You can check the arguments with the following command.
 
 ```
-$ cargo run --release -p find-simdoc --bin cosine -- --help
+$ cargo run --release -p find-simdoc-cli --bin cosine -- --help
 ```
 
 Run the following command if you want to search for `reuters.txt` with
@@ -121,11 +121,11 @@ Run the following command if you want to search for `reuters.txt` with
 - search radius `0.1`,
 - tokens of word `3`-grams,
 - word delimiter `" "` (i.e., a space),
-- `4*64=256` dimensions in the Hamming space, and
+- `10*64=640` dimensions in the Hamming space, and
 - weighting using the standard TF and the smoothed IDF.
 
 ```
-$ cargo run --release -p find-simdoc --bin cosine -- -i reuters.txt -r 0.1 -d " " -w 3 -c 4 -T standard -I smooth > result-cosine.csv
+$ cargo run --release -p find-simdoc-cli --bin cosine -- -i reuters.txt -r 0.1 -d " " -w 3 -c 10 -T standard -I smooth > result-cosine.csv
 ```
 
 Pairs of similar documents (indicated by zero-origin line numbers) and their distances are reported.
@@ -133,15 +133,15 @@ Pairs of similar documents (indicated by zero-origin line numbers) and their dis
 ```
 $ head result-cosine.csv
 i,j,dist
+542,49001,0.084375
 964,24198,0.09375
-1872,3024,0.0546875
-1872,6397,0.06640625
-1872,6823,0.08203125
-1872,8462,0.0703125
-1872,11402,0.07421875
-1872,18511,0.07421875
-1872,41491,0.05859375
-1872,48344,0.05859375
+1872,3024,0.0859375
+1872,6823,0.090625
+1872,8462,0.0953125
+1872,11402,0.090625
+1872,18511,0.0859375
+1872,41491,0.0875
+1872,48344,0.0859375
 ```
 
 ### 3. Printing similar documents
@@ -152,25 +152,28 @@ If you want to print similar documents in `reuters.txt` with the result `result-
 run the following command.
 
 ```
-$ cargo run --release -p find-simdoc --bin dump -- -i reuters.txt -s result-jaccard.csv
-[i=31,j=1357,dist=0.05859375]
-the january fall came after a strong 6 . 4 pct rise from november ' s rate of 1 . 774 mln units and brought completions to 6 . 7 pct above the january , 1986 , level of 1 . 765 mln units .
-the january fall came after a strong 6 . 4 pct rise from november ' s rate of 1 . 774 mln units and brought completions to 6 . 7 pct above the january , 1986 level of 1 . 765 mln units .
-[i=173,j=49999,dist=0.05078125]
-rio de janeiro dockers strike over wages rio de janeiro ' s 3 , 500 dockworkers went on strike for an indefinite period today to demand wage increases , a spokesman for the dockers said .
-rio de janeiro dockers strike rio de janeiro ' s 3 , 500 dockworkers went on strike for an indefinite period today to demand wage increases , a spokesman for the dockers said .
-[i=286,j=19892,dist=0.07421875]
-u . s . first time jobless claims rose in week new applications for unemployment insurance benefits rose to a seasonally adjusted 355 , 000 in the week ended march 21 from 341 , 000 in the prior week , the labor department said .
-u . s . first time jobless claims rose in week new applications for unemployment insurance benefits rose to a seasonally adjusted 341 , 000 in the week ended march 14 from 340 , 000 in the prior week , the labor department said .
-[i=308,j=51423,dist=0.015625]
-nigeria changes auction rules to defend naira nigeria ' s central bank has changed the rules governing its foreign exchange auctions in what analysts see as a means of defending the naira currency , which has depreciated steadily .
-nigeria changes auction rules to defend the naira nigeria ' s central bank has changed the rules governing its foreign exchange auctions in what analysts see as a means of defending the naira currency , which has depreciated steadily .
-[i=371,j=47578,dist=0.03125]
-" the administration should communicate to the european community the message that the united states will view the establishment of such a tax as inconsistent with the european community ' s obligations under the general agreement on tariffs and trade that will result in the adoption of strong and immediate countermeasures ," the resolution stated .
-" the administration should communciate to the european community the message that the united states will view the establishment of such a tax as inconsistent with the european community ' s obligations under the general agreement on tariffs and trade that will result in the adoption of strong and immediate countermeasures ," the resolution stated .
-[i=403,j=5338,dist=0.0859375]
-he forecast the chancellor ' s budget tax cuts would increase consumer expediture on imported goods .
-he forecast the chancellor ' s budget tax cuts would increase consumer expenditure on imported goods .
+$ cargo run --release -p find-simdoc-cli --bin dump -- -i reuters.txt -s result-jaccard.csv
+[i=191,j=29637,dist=0.07291666666666667]
+pending its deliberations , harper and row ' s board has postponed indefinitely a special meeting of stockholders that had been scheduled for april 2 to discuss a proposal to recapitalize the company ' s stock to create two classes of shares with different voting rights .
+pending its deliberations , harper and row ' s board has postponed indefinitely a special meeting of stockholders that had been scheduled for april 2 to discuss a proposal to recapitalize the company ' s stock in order to create two classes of shares with different votinmg rights .
+[i=199,j=38690,dist=0.0375]
+government officials had no immediate comment on the report , which advised a reduction in the overall size of the public investment programme and greater emphasis on the preservation of peru ' s export potential .
+government officials had no immediate comment on the report , which advised a reduction in the overall size of the public investment program and greater emphasis on the preservation of peru ' s export potential .
+[i=274,j=10048,dist=0.07083333333333333]
+the measure was adopted as part of a wide - ranging trade bill that will be considered by the full house in april before it moves on to the senate .
+the measure was adopted as part of a wide - ranging trade bill that will be considered by the full house in april before it moves onto the senate .
+[i=294,j=27675,dist=0.04791666666666667]
+the company said the start - up was necessitated by continuing strong demand for aluminum and dwindling worldwide inventories , and that the metal is needed to supply reynolds ' various fabricating businesses .
+the company said the start up was necessitated by continuing strong demand for aluminum and dwindling worldwide inventories , and that the metal is needed to supply reynolds ' various fabricating businesses .
+[i=311,j=13812,dist=0.04583333333333333]
+he said in an interview with reuter that after a few years it was likely south korea would drop barriers to foreign goods and move toward a more balanced trade position .
+he said in an interview with reuters that after a few years it was likely south korea would drop barriers to foreign goods and move toward a more balanced trade position .
+[i=361,j=50938,dist=0.08958333333333333]
+hog and cattle slaughter guesstimates chicago mercantile exchange floor traders and commission house representatives are guesstimating today ' s hog slaughter at about 295 , 000 to 305 , 000 head versus 307 , 000 week ago and 311 , 000 a year ago .
+hog and cattle slaughter guesstimates chicago mercantile exchange floor traders and commission house representatives are guesstimating today ' s hog slaughter at about 295 , 000 to 308 , 000 head versus 305 , 000 week ago and 308 , 000 a year ago .
+[i=469,j=6360,dist=0.035416666666666666]
+the national planning department forecast that in 1987 coffee , colombia ' s traditional major export , will account for only one - third of total exports , or about 1 . 5 billion dlrs .
+the national planning department forecast that in 1987 coffee , colombia ' s traditional major export , will account for only one third of total exports , or about 1 . 5 billion dlrs .
 ...
 ```
 
@@ -196,7 +199,7 @@ with the following command.
 The arguments for feature extraction are the same as those of `jaccard`.
 
 ```
-$ cargo run --release -p find-simdoc --bin minhash_acc -- -i reuters.5k.txt -w 5 > acc.csv
+$ cargo run --release -p find-simdoc-cli --bin minhash_acc -- -i reuters.5k.txt -w 5 > acc.csv
 ```
 
 The statistics will be reported as follows.
@@ -228,7 +231,7 @@ The following figure shows MAEs while varying the number of Hamming dimensions f
 
 ![](./figures/mae_reuters5k.svg)
 
-As expected, the larger the number, the higher the accuracy. For example, when the number of dimensions is 1024 (setting the argument `-c 128`), we achieve the MAE around 2.5%.
+As expected, the larger the number, the higher the accuracy. For example, when the number of dimensions is 1024 (setting the argument `-c 16`), we achieve the MAE around 2.5%.
 
 ### F1 score
 
@@ -236,9 +239,9 @@ The following figure shows F1 scores in search with radii 0.1, 0.2, and 0.5 (ind
 
 ![](./figures/f1_reuters5k.svg)
 
-For a small radius `-r 0.1`, short sketches are enough to obtain high F1 scores.
+For a small radius `-r 0.1`, few dimensions are enough to obtain high F1 scores.
 Setting at least `-c 2` achieves the perfect F1 score.
-For larger radii, when the number of dimensions is 1024 (setting `-c 128`),
+For larger radii, when the number of dimensions is 1024 (setting `-c 16`),
 we achieve the score around 90%.
 
 ## Disclaimer

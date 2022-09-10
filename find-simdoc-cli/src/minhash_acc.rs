@@ -16,8 +16,8 @@ const MAX_CHUNKS: usize = 100;
 
 #[derive(Parser, Debug)]
 #[clap(
-    name = "find-simdoc-minhash_mae",
-    about = "A program to test mean absolute errors in 1-bit minwise hashing."
+    name = "find-simdoc-minhash_acc",
+    about = "A program to test accuracy in 1-bit minwise hashing."
 )]
 struct Args {
     /// File path to a document file to be searched.
@@ -50,7 +50,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         return Err("window_size must not be 0.".into());
     }
 
-    let texts = BufReader::new(File::open(document_path)?)
+    let documents = BufReader::new(File::open(document_path)?)
         .lines()
         .map(|line| line.unwrap());
 
@@ -61,13 +61,15 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut extractor = FeatureExtractor::new(config);
 
     let features = {
-        eprintln!("Loading texts and extracting features...");
+        eprintln!("Loading documents and extracting features...");
         let start = Instant::now();
         let mut features = vec![];
-        for text in texts {
-            assert!(!text.is_empty());
+        for document in documents {
+            if document.is_empty() {
+                return Err("Input document must not be empty.".into());
+            }
             let mut feature = vec![];
-            extractor.extract(text, &mut feature);
+            extractor.extract(document, &mut feature);
             features.push(feature);
         }
         let duration = start.elapsed();

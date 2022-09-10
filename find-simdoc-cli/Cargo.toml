@@ -1,5 +1,5 @@
 [package]
-name = "find-simdoc"
+name = "find-simdoc-cli"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,8 +7,25 @@ edition = "2021"
 
 [dependencies]
 all-pairs-hamming = { path = "../all-pairs-hamming" } # MIT or Apache-2.0
-fasthash = "0.4.0"                                    # Apache-2.0
+clap = { version = "3.1", features = ["derive"] }     # MIT or Apache-2.0
+find-simdoc = { path = "../find-simdoc" }             # MIT or Apache-2.0
 hashbrown = "0.12.3"                                  # MIT or Apache-2.0
 lsh = { path = "../lsh" }                             # MIT or Apache-2.0
 rand = "0.8.5"                                        # MIT or Apache-2.0
 rand_xoshiro = "0.6.0"                                # MIT or Apache-2.0
+
+[[bin]]
+name = "jaccard"
+path = "src/jaccard.rs"
+
+[[bin]]
+name = "cosine"
+path = "src/cosine.rs"
+
+[[bin]]
+name = "dump"
+path = "src/dump.rs"
+
+[[bin]]
+name = "minhash_acc"
+path = "src/minhash_acc.rs"
