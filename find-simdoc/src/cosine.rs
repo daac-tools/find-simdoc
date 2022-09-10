@@ -6,6 +6,7 @@ use all_pairs_hamming::chunked_join::ChunkedJoiner;
 use lsh::simhash::SimHasher;
 use rand::{RngCore, SeedableRng};
 
+/// Searcher
 pub struct CosineSearcher {
     config: FeatureConfig,
     hasher: SimHasher,
@@ -16,38 +17,59 @@ pub struct CosineSearcher {
 }
 
 impl CosineSearcher {
-    pub fn new(window_size: usize, delimiter: Option<char>, seed: Option<u64>) -> Self {
+    /// Creates an instance.
+    ///
+    /// # Arguments
+    ///
+    /// * `window_size` - Window size for w-shingling in feature extraction (must be more than 0).
+    /// * `delimiter` - Delimiter for recognizing words as tokens in feature extraction.
+    ///                 If `None`, characters are used for tokens.
+    /// * `seed` - Seed value for random values.
+    pub fn new(window_size: usize, delimiter: Option<char>, seed: Option<u64>) -> Result<Self> {
+        if window_size == 0 {
+            return Err(FindSimdocError::input("Window size must not be 0."));
+        }
         let seed = seed.unwrap_or_else(rand::random::<u64>);
         let mut seeder = rand_xoshiro::SplitMix64::seed_from_u64(seed);
         let config = FeatureConfig::new(window_size, delimiter, seeder.next_u64());
         let hasher = SimHasher::new(seeder.next_u64());
-        Self {
+        Ok(Self {
             config,
             hasher,
             tf: None,
             idf: None,
             joiner: None,
             shows_progress: false,
-        }
+        })
     }
 
+    /// Shows the progress via the standard error output?
     pub const fn shows_progress(mut self, yes: bool) -> Self {
         self.shows_progress = yes;
         self
     }
 
+    /// Sets the scheme of TF weighting.
     #[allow(clippy::missing_const_for_fn)]
     pub fn tf(mut self, tf: Option<Tf<u64>>) -> Self {
         self.tf = tf;
         self
     }
 
+    /// Sets the scheme of IDF weighting.
     #[allow(clippy::missing_const_for_fn)]
     pub fn idf(mut self, idf: Option<Idf<u64>>) -> Self {
         self.idf = idf;
         self
     }
 
+    /// Builds the database of sketches from input documents.
+    ///
+    /// # Arguments
+    ///
+    /// * `documents` - List of documents (must not include an empty string).
+    /// * `num_chunks` - Number of chunks of sketches, indicating that
+    ///                  the number of dimensions in the Hamming space is `num_chunks*64`.
     pub fn build_sketches<I, D>(mut self, documents: I, num_chunks: usize) -> Result<Self>
     where
         I: IntoIterator<Item = D>,
@@ -79,26 +101,32 @@ impl CosineSearcher {
         Ok(self)
     }
 
+    /// Searches for all pairs of similar documents within an input radius, returning
+    /// triplets of the left-side index, the right-side index, and its distance.
     pub fn search_similar_pairs(&self, radius: f64) -> Vec<(usize, usize, f64)> {
         self.joiner.as_ref().unwrap().similar_pairs(radius)
     }
 
+    /// Gets the number of input documents.
     pub fn len(&self) -> usize {
         self.joiner
             .as_ref()
             .map_or(0, |joiner| joiner.num_sketches())
     }
 
+    /// Checks if the database is empty.
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
 
+    /// Gets the memory usage in bytes.
     pub fn memory_in_bytes(&self) -> usize {
         self.joiner
             .as_ref()
             .map_or(0, |joiner| joiner.memory_in_bytes())
     }
 
+    /// Gets the configure of feature extraction.
     pub const fn config(&self) -> FeatureConfig {
         self.config
     }
