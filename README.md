@@ -60,15 +60,12 @@ The workspace `find-simdoc` provides CLI tools for fast all-pair similarity sear
 The approach consists of three steps:
 
 1. Extract features from documents
-   - Set representation of character ngrams
-   - Set representation of word ngrams
+   - Set representation of character or word ngrams
+   - Tfidf-weighted vector representation of character or word ngrams
 2. Convert the features into binary sketches through locality sensitive hashing (LSH)
    - [1-bit minwise hashing](https://arxiv.org/abs/0910.3349) for the Jaccard similarity
    - [Simplified simhash](https://dl.acm.org/doi/10.1145/1242572.1242592) for the Cosine similarity
 3. Search for similar sketches in the Hamming space using a modified variant of the [sketch sorting approach](https://proceedings.mlr.press/v13/tabei10a.html)
-
-Note that the current version supports only set representations in Step 1.
-Supporting weighting approaches such as TF-IDF is the future work.
 
 #### 2.1 Jaccard space
 
@@ -121,13 +118,14 @@ $ cargo run --release -p find-simdoc --bin cosine -- --help
 
 Run the following command if you want to search for `reuters.txt` with
 
-- search radius `0.15`,
-- tokens of word `3`-grams
-- word delimiter `" "` (i.e., a space), and
-- `4*64=256` dimensions in the Hamming space.
+- search radius `0.1`,
+- tokens of word `3`-grams,
+- word delimiter `" "` (i.e., a space),
+- `4*64=256` dimensions in the Hamming space, and
+- weighting using the standard TF and the smoothed IDF.
 
 ```
-$ cargo run --release -p find-simdoc --bin cosine -- -i reuters.txt -r 0.15 -d " " -w 3 -c 4 > result-cosine.csv
+$ cargo run --release -p find-simdoc --bin cosine -- -i reuters.txt -r 0.1 -d " " -w 3 -c 4 -T standard -I smooth > result-cosine.csv
 ```
 
 Pairs of similar documents (indicated by zero-origin line numbers) and their distances are reported.
@@ -135,15 +133,15 @@ Pairs of similar documents (indicated by zero-origin line numbers) and their dis
 ```
 $ head result-cosine.csv
 i,j,dist
-31,1357,0.11328125
-173,49999,0.10546875
-308,51423,0.12890625
-371,47578,0.06640625
-448,27050,0.08203125
-457,18390,0.140625
-792,48327,0.1484375
-806,43538,0.140625
-844,30595,0.11328125
+964,24198,0.09375
+1872,3024,0.0546875
+1872,6397,0.06640625
+1872,6823,0.08203125
+1872,8462,0.0703125
+1872,11402,0.07421875
+1872,18511,0.07421875
+1872,41491,0.05859375
+1872,48344,0.05859375
 ```
 
 ### 3. Printing similar documents
@@ -243,5 +241,3 @@ dual licensed as above, without any additional terms or conditions.
 ## TODO
 
 - Add threading
-- Add TF-IDF weighting
-- Derive the complexity
