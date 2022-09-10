@@ -2,11 +2,51 @@ use std::error::Error;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Read};
 use std::path::PathBuf;
+use std::str::FromStr;
 use std::time::Instant;
 
-use find_simdoc::cosine::{CosineSearcher, IdfWeights, TfWeights};
+use find_simdoc::cosine::CosineSearcher;
+use find_simdoc::tfidf::{Idf, Tf};
 
 use clap::Parser;
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum TfWeights {
+    Binary,
+    Standard,
+    Sublinear,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum IdfWeights {
+    Unary,
+    Standard,
+    Smooth,
+}
+
+impl FromStr for TfWeights {
+    type Err = &'static str;
+    fn from_str(w: &str) -> Result<Self, Self::Err> {
+        match w {
+            "binary" => Ok(Self::Binary),
+            "standard" => Ok(Self::Standard),
+            "sublinear" => Ok(Self::Sublinear),
+            _ => Err("Could not parse a tf-weighting value"),
+        }
+    }
+}
+
+impl FromStr for IdfWeights {
+    type Err = &'static str;
+    fn from_str(w: &str) -> Result<Self, Self::Err> {
+        match w {
+            "unary" => Ok(Self::Unary),
+            "standard" => Ok(Self::Standard),
+            "smooth" => Ok(Self::Smooth),
+            _ => Err("Could not parse a idf-weighting value"),
+        }
+    }
+}
 
 #[derive(Parser, Debug)]
 #[clap(
@@ -72,27 +112,37 @@ fn main() -> Result<(), Box<dyn Error>> {
         return Err("window_size must not be 0.".into());
     }
 
-    let mut searcher = CosineSearcher::new(window_size, delimiter, seed)
-        .shows_progress(true)
-        .tf(tf_weight);
+    let mut searcher = CosineSearcher::new(window_size, delimiter, seed).shows_progress(true);
 
-    match idf_weight {
-        IdfWeights::Unary => {}
+    let tf = match tf_weight {
+        TfWeights::Binary => None,
+        TfWeights::Standard | TfWeights::Sublinear => {
+            Some(Tf::<u64>::new().sublinear(tf_weight == TfWeights::Sublinear))
+        }
+    };
+
+    let idf = match idf_weight {
+        IdfWeights::Unary => None,
         IdfWeights::Standard | IdfWeights::Smooth => {
             eprintln!("Building IDF...");
             let start = Instant::now();
             let documents = texts_iter(File::open(&document_path)?);
-            searcher = searcher.idf(idf_weight, Some(documents))?;
+            let idf = Idf::new()
+                .smooth(idf_weight == IdfWeights::Smooth)
+                .build(documents, searcher.config())?;
             let duration = start.elapsed();
-            eprintln!("Produced in {} sec", duration.as_secs_f64(),);
+            eprintln!("Produced in {} sec", duration.as_secs_f64());
+            Some(idf)
         }
-    }
+    };
+
+    searcher = searcher.tf(tf).idf(idf);
 
     {
         eprintln!("Converting documents into sketches...");
         let start = Instant::now();
         let documents = texts_iter(File::open(&document_path)?);
-        searcher = searcher.build_sketches(documents, num_chunks);
+        searcher = searcher.build_sketches(documents, num_chunks)?;
         let duration = start.elapsed();
         let memory_in_bytes = searcher.memory_in_bytes() as f64;
         eprintln!(

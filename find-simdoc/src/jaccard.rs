@@ -8,8 +8,8 @@ use rand::{RngCore, SeedableRng};
 pub struct JaccardSearcher {
     config: FeatureConfig,
     hasher: MinHasher,
-    shows_progress: bool,
     joiner: Option<ChunkedJoiner<u64>>,
+    shows_progress: bool,
 }
 
 impl JaccardSearcher {
@@ -21,12 +21,12 @@ impl JaccardSearcher {
         Self {
             config,
             hasher,
-            shows_progress: false,
             joiner: None,
+            shows_progress: false,
         }
     }
 
-    pub fn shows_progress(mut self, yes: bool) -> Self {
+    pub const fn shows_progress(mut self, yes: bool) -> Self {
         self.shows_progress = yes;
         self
     }
@@ -55,24 +55,20 @@ impl JaccardSearcher {
     }
 
     pub fn search_similar_pairs(&self, radius: f64) -> Vec<(usize, usize, f64)> {
-        if let Some(joiner) = self.joiner.as_ref() {
+        self.joiner.as_ref().map_or_else(Vec::new, |joiner| {
             // In 1-bit minhash, the collision probability is multiplied by 2 over the original.
             // Thus, we should search with the half of the actual radius.
             let mut results = joiner.similar_pairs(radius / 2.);
             // Modifies the distances.
             results.iter_mut().for_each(|(_, _, d)| *d *= 2.);
             results
-        } else {
-            vec![]
-        }
+        })
     }
 
     pub fn len(&self) -> usize {
-        if let Some(joiner) = self.joiner.as_ref() {
-            joiner.num_sketches()
-        } else {
-            0
-        }
+        self.joiner
+            .as_ref()
+            .map_or(0, |joiner| joiner.num_sketches())
     }
 
     pub fn is_empty(&self) -> bool {
@@ -80,10 +76,12 @@ impl JaccardSearcher {
     }
 
     pub fn memory_in_bytes(&self) -> usize {
-        if let Some(joiner) = self.joiner.as_ref() {
-            joiner.memory_in_bytes()
-        } else {
-            0
-        }
+        self.joiner
+            .as_ref()
+            .map_or(0, |joiner| joiner.memory_in_bytes())
+    }
+
+    pub const fn config(&self) -> FeatureConfig {
+        self.config
     }
 }

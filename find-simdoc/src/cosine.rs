@@ -5,54 +5,14 @@ use crate::tfidf::{Idf, Tf};
 use all_pairs_hamming::chunked_join::ChunkedJoiner;
 use lsh::simhash::SimHasher;
 use rand::{RngCore, SeedableRng};
-use std::str::FromStr;
-
-#[derive(Clone, Debug)]
-pub enum TfWeights {
-    Binary,
-    Standard,
-    Sublinear,
-}
-
-#[derive(Clone, Debug)]
-pub enum IdfWeights {
-    Unary,
-    Standard,
-    Smooth,
-}
-
-impl FromStr for TfWeights {
-    type Err = &'static str;
-    fn from_str(w: &str) -> Result<Self, Self::Err> {
-        match w {
-            "binary" => Ok(Self::Binary),
-            "standard" => Ok(Self::Standard),
-            "sublinear" => Ok(Self::Sublinear),
-            _ => Err("Could not parse a tf-weighting value"),
-        }
-    }
-}
-
-impl FromStr for IdfWeights {
-    type Err = &'static str;
-    fn from_str(w: &str) -> Result<Self, Self::Err> {
-        match w {
-            "unary" => Ok(Self::Unary),
-            "standard" => Ok(Self::Standard),
-            "smooth" => Ok(Self::Smooth),
-            _ => Err("Could not parse a idf-weighting value"),
-        }
-    }
-}
 
 pub struct CosineSearcher {
     config: FeatureConfig,
     hasher: SimHasher,
-    shows_progress: bool,
-    tf_weight: TfWeights,
-    idf_weight: IdfWeights,
+    tf: Option<Tf<u64>>,
     idf: Option<Idf<u64>>,
     joiner: Option<ChunkedJoiner<u64>>,
+    shows_progress: bool,
 }
 
 impl CosineSearcher {
@@ -64,100 +24,59 @@ impl CosineSearcher {
         Self {
             config,
             hasher,
-            shows_progress: false,
-            tf_weight: TfWeights::Binary,
-            idf_weight: IdfWeights::Unary,
+            tf: None,
             idf: None,
             joiner: None,
+            shows_progress: false,
         }
     }
 
-    pub fn shows_progress(mut self, yes: bool) -> Self {
+    pub const fn shows_progress(mut self, yes: bool) -> Self {
         self.shows_progress = yes;
         self
     }
 
-    pub fn tf(mut self, tf_weight: TfWeights) -> Self {
-        self.tf_weight = tf_weight;
+    #[allow(clippy::missing_const_for_fn)]
+    pub fn tf(mut self, tf: Option<Tf<u64>>) -> Self {
+        self.tf = tf;
         self
     }
 
-    pub fn idf<I, D>(mut self, idf_weight: IdfWeights, documents: Option<I>) -> Result<Self>
-    where
-        I: IntoIterator<Item = D>,
-        D: AsRef<str>,
-    {
-        match idf_weight {
-            IdfWeights::Unary => {}
-            IdfWeights::Standard | IdfWeights::Smooth => {
-                if let Some(documents) = documents {
-                    let mut extractor = FeatureExtractor::new(self.config);
-                    let mut idf = Idf::new();
-                    let mut feature = vec![];
-                    for doc in documents {
-                        let doc = doc.as_ref();
-                        if doc.is_empty() {
-                            return Err(FindSimdocError::input(
-                                "Input document must not be empty.",
-                            ));
-                        }
-                        extractor.extract(doc, &mut feature);
-                        idf.add(&feature);
-                    }
-                    self.idf = Some(idf);
-                } else {
-                    return Err(FindSimdocError::input("Input document must not be empty."));
-                }
-            }
-        }
-        self.idf_weight = idf_weight;
-        Ok(self)
+    #[allow(clippy::missing_const_for_fn)]
+    pub fn idf(mut self, idf: Option<Idf<u64>>) -> Self {
+        self.idf = idf;
+        self
     }
 
-    pub fn build_sketches<I, D>(mut self, documents: I, num_chunks: usize) -> Self
+    pub fn build_sketches<I, D>(mut self, documents: I, num_chunks: usize) -> Result<Self>
     where
         I: IntoIterator<Item = D>,
         D: AsRef<str>,
     {
         let mut joiner = ChunkedJoiner::<u64>::new(num_chunks).shows_progress(self.shows_progress);
         let mut extractor = FeatureExtractor::new(self.config);
-        let mut tf = Tf::new();
         let mut feature = vec![];
         for (i, doc) in documents.into_iter().enumerate() {
             if self.shows_progress && (i + 1) % 1000 == 0 {
                 eprintln!("Processed {} documents...", i + 1);
             }
             let doc = doc.as_ref();
-            assert!(!doc.is_empty());
-            extractor.extract_with_weights(doc, &mut feature);
-            match self.tf_weight {
-                TfWeights::Binary => {}
-                TfWeights::Standard => {
-                    tf.tf(&mut feature);
-                }
-                TfWeights::Sublinear => {
-                    tf.tf_sublinear(&mut feature);
-                }
+            if doc.is_empty() {
+                return Err(FindSimdocError::input("Input document must not be empty."));
             }
-            match self.idf_weight {
-                IdfWeights::Unary => {}
-                IdfWeights::Standard => {
-                    let idf = self.idf.as_ref().unwrap();
-                    for (term, weight) in feature.iter_mut() {
-                        *weight *= idf.idf(*term);
-                    }
-                }
-                IdfWeights::Smooth => {
-                    let idf = self.idf.as_ref().unwrap();
-                    for (term, weight) in feature.iter_mut() {
-                        *weight *= idf.idf_smooth(*term);
-                    }
+            extractor.extract_with_weights(doc, &mut feature);
+            if let Some(tf) = self.tf.as_mut() {
+                tf.tf(&mut feature);
+            }
+            if let Some(idf) = self.idf.as_ref() {
+                for (term, weight) in feature.iter_mut() {
+                    *weight *= idf.idf(*term);
                 }
             }
             joiner.add(self.hasher.iter(&feature)).unwrap();
         }
         self.joiner = Some(joiner);
-        self
+        Ok(self)
     }
 
     pub fn search_similar_pairs(&self, radius: f64) -> Vec<(usize, usize, f64)> {
@@ -165,11 +84,9 @@ impl CosineSearcher {
     }
 
     pub fn len(&self) -> usize {
-        if let Some(joiner) = self.joiner.as_ref() {
-            joiner.num_sketches()
-        } else {
-            0
-        }
+        self.joiner
+            .as_ref()
+            .map_or(0, |joiner| joiner.num_sketches())
     }
 
     pub fn is_empty(&self) -> bool {
@@ -177,10 +94,12 @@ impl CosineSearcher {
     }
 
     pub fn memory_in_bytes(&self) -> usize {
-        if let Some(joiner) = self.joiner.as_ref() {
-            joiner.memory_in_bytes()
-        } else {
-            0
-        }
+        self.joiner
+            .as_ref()
+            .map_or(0, |joiner| joiner.memory_in_bytes())
+    }
+
+    pub const fn config(&self) -> FeatureConfig {
+        self.config
     }
 }
