@@ -20,7 +20,7 @@ This software provides fast all-pair similarity searches in documents.
 
 ## Running example
 
-Here, we describe the basic usage of this software through a running example.
+Here, we describe the basic usage of this software through an example of running the CLI tool.
 
 First of all, install `rustc` and `cargo` following the [official instructions](https://www.rust-lang.org/tools/install) since this software is implemented in Rust.
 
@@ -56,7 +56,7 @@ To do this, the output lines are shuffled, and your file will not be the identic
 
 ### 2. Finding all pairs of similar documents
 
-The workspace `find-simdoc` provides CLI tools for fast all-pair similarity searches in documents.
+The workspace `find-simdoc-cli` provides CLI tools for fast all-pair similarity searches in documents.
 The approach consists of three steps:
 
 1. Extract features from documents
@@ -73,7 +73,7 @@ The executable `jaccard` provides a similarity search in the [Jaccard space](htt
 You can check the arguments with the following command.
 
 ```
-$ cargo run --release -p find-simdoc --bin jaccard -- --help
+$ cargo run --release -p find-simdoc-cli --bin jaccard -- --help
 ```
 
 Run the following command if you want to search for `reuters.txt` with
@@ -83,7 +83,7 @@ Run the following command if you want to search for `reuters.txt` with
 - `8*64=512` dimensions in the Hamming space.
 
 ```
-$ cargo run --release -p find-simdoc --bin jaccard -- -i reuters.txt -r 0.1 -w 5 -c 8 > result-jaccard.csv
+$ cargo run --release -p find-simdoc-cli --bin jaccard -- -i reuters.txt -r 0.1 -w 5 -c 8 > result-jaccard.csv
 ```
 
 Argument `-c` indicates the number of dimensions in the Hamming space,
@@ -113,7 +113,7 @@ The executable `cosine` provides a similarity search in the [Cosine space](https
 You can check the arguments with the following command.
 
 ```
-$ cargo run --release -p find-simdoc --bin cosine -- --help
+$ cargo run --release -p find-simdoc-cli --bin cosine -- --help
 ```
 
 Run the following command if you want to search for `reuters.txt` with
@@ -125,7 +125,7 @@ Run the following command if you want to search for `reuters.txt` with
 - weighting using the standard TF and the smoothed IDF.
 
 ```
-$ cargo run --release -p find-simdoc --bin cosine -- -i reuters.txt -r 0.1 -d " " -w 3 -c 4 -T standard -I smooth > result-cosine.csv
+$ cargo run --release -p find-simdoc-cli --bin cosine -- -i reuters.txt -r 0.1 -d " " -w 3 -c 4 -T standard -I smooth > result-cosine.csv
 ```
 
 Pairs of similar documents (indicated by zero-origin line numbers) and their distances are reported.
@@ -152,7 +152,7 @@ If you want to print similar documents in `reuters.txt` with the result `result-
 run the following command.
 
 ```
-$ cargo run --release -p find-simdoc --bin dump -- -i reuters.txt -s result-jaccard.csv
+$ cargo run --release -p find-simdoc-cli --bin dump -- -i reuters.txt -s result-jaccard.csv
 [i=31,j=1357,dist=0.05859375]
 the january fall came after a strong 6 . 4 pct rise from november ' s rate of 1 . 774 mln units and brought completions to 6 . 7 pct above the january , 1986 , level of 1 . 765 mln units .
 the january fall came after a strong 6 . 4 pct rise from november ' s rate of 1 . 774 mln units and brought completions to 6 . 7 pct above the january , 1986 level of 1 . 765 mln units .
@@ -196,7 +196,7 @@ with the following command.
 The arguments for feature extraction are the same as those of `jaccard`.
 
 ```
-$ cargo run --release -p find-simdoc --bin minhash_acc -- -i reuters.5k.txt -w 5 > acc.csv
+$ cargo run --release -p find-simdoc-cli --bin minhash_acc -- -i reuters.5k.txt -w 5 > acc.csv
 ```
 
 The statistics will be reported as follows.
