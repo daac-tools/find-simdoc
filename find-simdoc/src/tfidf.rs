@@ -51,7 +51,7 @@ where
 
     /// Computes the IDF of an input term.
     pub fn idf(&self, term: T) -> f64 {
-        let c = if self.smooth { 1 } else { 0 };
+        let c = usize::from(self.smooth);
         let n = (self.num_docs + c) as f64;
         let m = (*self.counter.get(&term).unwrap() + c) as f64;
         (n / m).log10() + 1.
