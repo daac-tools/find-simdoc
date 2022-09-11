@@ -30,7 +30,7 @@
 //! 1. Extract features from documents
 //!    - Set representation of character or word ngrams
 //!    - Tfidf-weighted vector representation of character or word ngrams
-//! 2. Convert the features into binary sketches through locality sensitive hashing (LSH)
+//! 2. Convert the features into binary sketches through locality sensitive hashing
 //!    - [1-bit minwise hashing](https://dl.acm.org/doi/abs/10.1145/1772690.1772759) for the Jaccard similarity
 //!    - [Simplified simhash](https://dl.acm.org/doi/10.1145/1242572.1242592) for the Cosine similarity
 //! 3. Search for similar sketches in the Hamming space using a modified variant of the [sketch sorting approach](https://proceedings.mlr.press/v13/tabei10a.html)
