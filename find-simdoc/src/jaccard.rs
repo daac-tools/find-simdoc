@@ -14,7 +14,7 @@ use rand::{RngCore, SeedableRng};
 ///
 /// 1. Extracts features from documents,
 ///    where a feature is a set representation of character or word ngrams.
-/// 2. Convert the features into binary sketches through the [1-bit minwise hashing](https://arxiv.org/abs/0910.3349).
+/// 2. Convert the features into binary sketches through the [1-bit minwise hashing](https://dl.acm.org/doi/abs/10.1145/1772690.1772759).
 /// 3. Search for similar sketches in the Hamming space using [`ChunkedJoiner`].
 ///
 /// # Examples
