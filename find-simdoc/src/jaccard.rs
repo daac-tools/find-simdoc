@@ -82,7 +82,7 @@ impl JaccardSearcher {
     }
 
     /// Searches for all pairs of similar documents within an input radius, returning
-    /// triplets of the left-side index, the right-side index, and its distance.
+    /// triplets of the left-side id, the right-side id, and their distance.
     pub fn search_similar_pairs(&self, radius: f64) -> Vec<(usize, usize, f64)> {
         self.joiner.as_ref().map_or_else(Vec::new, |joiner| {
             // In 1-bit minhash, the collision probability is multiplied by 2 over the original.
