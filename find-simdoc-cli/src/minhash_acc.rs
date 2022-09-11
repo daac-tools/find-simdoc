@@ -57,7 +57,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut seeder =
         rand_xoshiro::SplitMix64::seed_from_u64(seed.unwrap_or_else(rand::random::<u64>));
 
-    let config = FeatureConfig::new(window_size, delimiter, seeder.next_u64());
+    let config = FeatureConfig::new(window_size, delimiter, seeder.next_u64())?;
     let mut extractor = FeatureExtractor::new(config);
 
     let features = {

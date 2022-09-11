@@ -5,8 +5,8 @@ use std::path::PathBuf;
 use std::str::FromStr;
 use std::time::Instant;
 
-use find_simdoc::cosine::CosineSearcher;
 use find_simdoc::tfidf::{Idf, Tf};
+use find_simdoc::CosineSearcher;
 
 use clap::Parser;
 
@@ -67,7 +67,7 @@ struct Args {
     #[clap(short = 'd', long)]
     delimiter: Option<char>,
 
-    /// Window size for w-shingling in feature extraction (must to be more than 0).
+    /// Window size for w-shingling in feature extraction (must be more than 0).
     #[clap(short = 'w', long, default_value = "1")]
     window_size: usize,
 
@@ -108,11 +108,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let idf_weight = args.idf;
     let seed = args.seed;
 
-    if window_size == 0 {
-        return Err("window_size must not be 0.".into());
-    }
-
-    let mut searcher = CosineSearcher::new(window_size, delimiter, seed).shows_progress(true);
+    let mut searcher = CosineSearcher::new(window_size, delimiter, seed)?.shows_progress(true);
 
     let tf = match tf_weight {
         TfWeights::Binary => None,

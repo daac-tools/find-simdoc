@@ -6,7 +6,7 @@ use std::time::Instant;
 
 use clap::Parser;
 
-use find_simdoc::jaccard::JaccardSearcher;
+use find_simdoc::JaccardSearcher;
 
 #[derive(Parser, Debug)]
 #[clap(
@@ -27,7 +27,7 @@ struct Args {
     #[clap(short = 'd', long)]
     delimiter: Option<char>,
 
-    /// Window size for w-shingling in feature extraction (must to be more than 0).
+    /// Window size for w-shingling in feature extraction (must be more than 0).
     #[clap(short = 'w', long, default_value = "1")]
     window_size: usize,
 
@@ -52,11 +52,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let num_chunks = args.num_chunks;
     let seed = args.seed;
 
-    if window_size == 0 {
-        return Err("window_size must not be 0.".into());
-    }
-
-    let mut searcher = JaccardSearcher::new(window_size, delimiter, seed).shows_progress(true);
+    let mut searcher = JaccardSearcher::new(window_size, delimiter, seed)?.shows_progress(true);
 
     {
         eprintln!("Converting documents into sketches...");

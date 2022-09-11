@@ -1,10 +1,6 @@
 use rand_xoshiro::rand_core::{RngCore, SeedableRng};
 
-/// SimHash for Cosine similarity.
-///
-/// # Reference
-///
-/// * https://dl.acm.org/doi/10.1145/2063576.2063737
+/// [Simplified simhash](https://dl.acm.org/doi/10.1145/2063576.2063737) for Cosine similarity.
 pub struct SimHasher {
     seed: u64,
 }

@@ -14,8 +14,7 @@ struct Record<S> {
     sketch: S,
 }
 
-/// Multi-sorting algorithm for finding pairs of similar short substrings from large-scale string data
-/// https://doi.org/10.1007/s10115-009-0271-6
+/// [Multi-sorting algorithm for finding pairs of similar short substrings from large-scale string data](https://doi.org/10.1007/s10115-009-0271-6)
 #[derive(Clone, Debug)]
 pub struct MultiSort<S> {
     radius: usize,

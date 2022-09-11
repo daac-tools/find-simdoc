@@ -1,9 +1,12 @@
-use hashbrown::{HashMap, HashSet};
+//! Weighters of TF-IDF.
 use std::hash::Hash;
+
+use hashbrown::{HashMap, HashSet};
 
 use crate::errors::{FindSimdocError, Result};
 use crate::feature::{FeatureConfig, FeatureExtractor};
 
+/// Weighter of inverse document frequency.
 #[derive(Default)]
 pub struct Idf<T> {
     counter: HashMap<T, usize>,
@@ -16,15 +19,18 @@ impl<T> Idf<T>
 where
     T: Hash + Eq + Copy + Default,
 {
+    /// Creates an instance.
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// Enables smoothing.
     pub const fn smooth(mut self, yes: bool) -> Self {
         self.smooth = yes;
         self
     }
 
+    /// Trains the frequency of terms for a document.
     pub fn add(&mut self, terms: &[T]) {
         self.dedup.clear();
         for &term in terms {
@@ -38,12 +44,14 @@ where
         self.num_docs += 1;
     }
 
+    /// Gets the number of input documents.
     pub const fn num_docs(&self) -> usize {
         self.num_docs
     }
 
+    /// Computes the IDF of an input term.
     pub fn idf(&self, term: T) -> f64 {
-        let c = if self.smooth { 1 } else { 0 };
+        let c = usize::from(self.smooth);
         let n = (self.num_docs + c) as f64;
         let m = (*self.counter.get(&term).unwrap() + c) as f64;
         (n / m).log10() + 1.
@@ -51,6 +59,12 @@ where
 }
 
 impl Idf<u64> {
+    /// Trains the term frequency of input documents.
+    ///
+    /// # Arguments
+    ///
+    /// * `documents` - List of documents.
+    /// * `config` - Configuration of feature extraction. Use the same configuration as that in search.
     pub fn build<I, D>(mut self, documents: I, config: FeatureConfig) -> Result<Self>
     where
         I: IntoIterator<Item = D>,
@@ -70,6 +84,7 @@ impl Idf<u64> {
     }
 }
 
+/// Weighter of term frequency.
 #[derive(Default)]
 pub struct Tf<T> {
     counter: HashMap<T, usize>,
@@ -80,15 +95,18 @@ impl<T> Tf<T>
 where
     T: Hash + Eq + Copy + Default,
 {
+    /// Creates an instance.
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// Enables sublinear normalization.
     pub const fn sublinear(mut self, yes: bool) -> Self {
         self.sublinear = yes;
         self
     }
 
+    /// Computes the TF of input terms.
     pub fn tf(&mut self, terms: &mut [(T, f64)]) {
         self.count(terms);
         let total = terms.len() as f64;
