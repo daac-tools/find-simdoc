@@ -14,16 +14,12 @@
 //! - **Easy to use:** This software supports all essential steps of document similarity search,
 //! from feature extraction to output of similar pairs.
 //! Therefore, you can immediately try the fast all-pair similarity search using your document files.
-//!
 //! - **Flexible tokenization:** You can specify any delimiter when splitting words in tokenization for feature extraction.
 //! This can be useful in languages where multiple definitions of words exist, such as Japanese or Chinese.
-//!
-//! - **Time- and memory-efficient:** The time complexity is *linear* over the numbers of input documents and output results,
+//! - **Time efficiency:** The time complexity is *linear* over the numbers of input documents and output results,
 //! based on the idea of the [sketch sorting approach](https://proceedings.mlr.press/v13/tabei10a.html).
-//! The memory complexity is *linear* over the numbers of input documents,
-//! and the actual memory usage is also very low thanks to locality sensitive hashing.
-//!
-//! - **Pure Rust:** This software is implemented in Rust, achieving safe and fast performance.
+//! - **Memory efficiency:** The memory complexity is *linear* over the numbers of input documents,
+//! and the actual memory usage is also very low thanks to compact binary sketches by locality sensitive hashing.
 //!
 //! # Search steps
 //!
