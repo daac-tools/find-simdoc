@@ -1,6 +1,6 @@
 # Finding all-pair similar documents
 
-This software provides fast all-pair similarity searches in documents.
+This software provides time- and memory-efficient all-pair similarity searches in documents.
 
 ## Problem definition
 

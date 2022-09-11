@@ -1,4 +1,4 @@
-//! Fast all-pair similarity searches in documents.
+//! Time- and memory-efficient all-pair similarity searches in documents.
 //!
 //! # Problem definition
 //!
