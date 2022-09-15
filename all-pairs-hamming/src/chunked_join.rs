@@ -53,6 +53,7 @@ where
         let mut candidates = HashSet::new();
         for (j, chunk) in self.chunks.iter().enumerate() {
             // Based on the general pigeonhole principle.
+            // https://doi.org/10.1109/TKDE.2019.2899597
             if j + hamradius + 1 < self.chunks.len() {
                 continue;
             }

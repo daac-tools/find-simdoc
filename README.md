@@ -275,3 +275,4 @@ dual licensed as above, without any additional terms or conditions.
 ## TODO
 
 - Use multi threads for slow minwise hashing.
+- Release `all-pairs-hamming` in crate.io.
