@@ -51,20 +51,16 @@ impl FeatureConfig {
 /// Extractor of feature vectors.
 pub struct FeatureExtractor {
     config: FeatureConfig,
-    token_ranges: Vec<Range<usize>>,
 }
 
 impl FeatureExtractor {
     /// Creates an instance.
     pub const fn new(config: FeatureConfig) -> Self {
-        Self {
-            config,
-            token_ranges: vec![],
-        }
+        Self { config }
     }
 
     /// Extracts a feature vector from an input text.
-    pub fn extract<S>(&mut self, text: S, feature: &mut Vec<u64>)
+    pub fn extract<S>(&self, text: S, feature: &mut Vec<u64>)
     where
         S: AsRef<str>,
     {
@@ -75,15 +71,15 @@ impl FeatureExtractor {
             // The simplest case.
             text.chars().for_each(|c| feature.push(c as u64));
         } else {
-            self.tokenize(text);
-            for ranges in ShingleIter::new(&self.token_ranges, self.config.window_size) {
+            let token_ranges = self.tokenize(text);
+            for ranges in ShingleIter::new(&token_ranges, self.config.window_size) {
                 feature.push(self.config.hash(ranges.iter().cloned().map(|r| &text[r])));
             }
         }
     }
 
     /// Extracts a feature vector from an input text with weights of 1.0.
-    pub fn extract_with_weights<S>(&mut self, text: S, feature: &mut Vec<(u64, f64)>)
+    pub fn extract_with_weights<S>(&self, text: S, feature: &mut Vec<(u64, f64)>)
     where
         S: AsRef<str>,
     {
@@ -98,8 +94,8 @@ impl FeatureExtractor {
                 feature.push((f, w))
             });
         } else {
-            self.tokenize(text);
-            for ranges in ShingleIter::new(&self.token_ranges, self.config.window_size) {
+            let token_ranges = self.tokenize(text);
+            for ranges in ShingleIter::new(&token_ranges, self.config.window_size) {
                 let f = self.config.hash(ranges.iter().cloned().map(|r| &text[r]));
                 let w = 1.;
                 feature.push((f, w))
@@ -107,33 +103,34 @@ impl FeatureExtractor {
         }
     }
 
-    fn tokenize(&mut self, text: &str) {
-        self.token_ranges.clear();
+    fn tokenize(&self, text: &str) -> Vec<Range<usize>> {
+        let mut token_ranges = vec![];
         for _ in 1..self.config.window_size {
-            self.token_ranges.push(0..0); // BOS
+            token_ranges.push(0..0); // BOS
         }
         let mut offset = 0;
         if let Some(delim) = self.config.delimiter {
             while offset < text.len() {
                 let len = text[offset..].find(delim);
                 if let Some(len) = len {
-                    self.token_ranges.push(offset..offset + len);
+                    token_ranges.push(offset..offset + len);
                     offset += len + 1;
                 } else {
-                    self.token_ranges.push(offset..text.len());
+                    token_ranges.push(offset..text.len());
                     break;
                 }
             }
         } else {
             for c in text.chars() {
                 let len = c.len_utf8();
-                self.token_ranges.push(offset..offset + len);
+                token_ranges.push(offset..offset + len);
                 offset += len;
             }
         }
         for _ in 1..self.config.window_size {
-            self.token_ranges.push(text.len()..text.len()); // EOS
+            token_ranges.push(text.len()..text.len()); // EOS
         }
+        token_ranges
     }
 }
 
@@ -144,7 +141,7 @@ mod tests {
     #[test]
     fn test_char_unigram() {
         let config = FeatureConfig::new(1, None, 42).unwrap();
-        let mut extractor = FeatureExtractor::new(config);
+        let extractor = FeatureExtractor::new(config);
 
         let text = "abcd";
         let mut feature = vec![];
@@ -159,7 +156,7 @@ mod tests {
     #[test]
     fn test_char_bigram() {
         let config = FeatureConfig::new(2, None, 42).unwrap();
-        let mut extractor = FeatureExtractor::new(config);
+        let extractor = FeatureExtractor::new(config);
 
         let text = "abcd";
         let mut feature = vec![];
@@ -180,7 +177,7 @@ mod tests {
     #[test]
     fn test_char_trigram() {
         let config = FeatureConfig::new(3, None, 42).unwrap();
-        let mut extractor = FeatureExtractor::new(config);
+        let extractor = FeatureExtractor::new(config);
 
         let text = "abcd";
         let mut feature = vec![];
@@ -202,7 +199,7 @@ mod tests {
     #[test]
     fn test_word_unigram() {
         let config = FeatureConfig::new(1, Some(' '), 42).unwrap();
-        let mut extractor = FeatureExtractor::new(config);
+        let extractor = FeatureExtractor::new(config);
 
         let text = "abc de fgh";
         let mut feature = vec![];
@@ -221,7 +218,7 @@ mod tests {
     #[test]
     fn test_word_bigram() {
         let config = FeatureConfig::new(2, Some(' '), 42).unwrap();
-        let mut extractor = FeatureExtractor::new(config);
+        let extractor = FeatureExtractor::new(config);
 
         let text = "abc de fgh";
         let mut feature = vec![];
@@ -241,7 +238,7 @@ mod tests {
     #[test]
     fn test_word_trigram() {
         let config = FeatureConfig::new(3, Some(' '), 42).unwrap();
-        let mut extractor = FeatureExtractor::new(config);
+        let extractor = FeatureExtractor::new(config);
 
         let text = "abc de fgh";
         let mut feature = vec![];

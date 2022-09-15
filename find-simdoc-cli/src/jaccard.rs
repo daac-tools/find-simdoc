@@ -58,7 +58,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         eprintln!("Converting documents into sketches...");
         let start = Instant::now();
         let documents = texts_iter(File::open(&document_path)?);
-        searcher = searcher.build_sketches(documents, num_chunks)?;
+        // searcher = searcher.build_sketches(documents, num_chunks)?;
+        searcher = searcher.build_sketches_in_parallel(documents, num_chunks)?;
         let duration = start.elapsed();
         let memory_in_bytes = searcher.memory_in_bytes() as f64;
         eprintln!(

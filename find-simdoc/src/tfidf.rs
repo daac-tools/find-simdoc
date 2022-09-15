@@ -70,7 +70,7 @@ impl Idf<u64> {
         I: IntoIterator<Item = D>,
         D: AsRef<str>,
     {
-        let mut extractor = FeatureExtractor::new(config);
+        let extractor = FeatureExtractor::new(config);
         let mut feature = vec![];
         for doc in documents {
             let doc = doc.as_ref();

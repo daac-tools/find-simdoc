@@ -5,6 +5,7 @@ use crate::feature::{FeatureConfig, FeatureExtractor};
 use all_pairs_hamming::chunked_join::ChunkedJoiner;
 use lsh::minhash::MinHasher;
 use rand::{RngCore, SeedableRng};
+use rayon::prelude::*;
 
 /// Searcher for all-pair similar documents in the Jaccard space.
 ///
@@ -89,7 +90,8 @@ impl JaccardSearcher {
         D: AsRef<str>,
     {
         let mut joiner = ChunkedJoiner::<u64>::new(num_chunks).shows_progress(self.shows_progress);
-        let mut extractor = FeatureExtractor::new(self.config);
+        let extractor = FeatureExtractor::new(self.config);
+
         let mut feature = vec![];
         for (i, doc) in documents.into_iter().enumerate() {
             if self.shows_progress && (i + 1) % 10000 == 0 {
@@ -101,6 +103,52 @@ impl JaccardSearcher {
             }
             extractor.extract(doc, &mut feature);
             joiner.add(self.hasher.iter(&feature)).unwrap();
+        }
+        self.joiner = Some(joiner);
+        Ok(self)
+    }
+
+    /// Builds the database of sketches from input documents in parallel.
+    ///
+    /// # Arguments
+    ///
+    /// * `documents` - List of documents (must not include an empty string).
+    /// * `num_chunks` - Number of chunks of sketches, indicating that
+    ///                  the number of dimensions in the Hamming space is `num_chunks*64`.
+    ///
+    /// # Notes
+    ///
+    /// The progress is not printed even if `shows_progress = true`.
+    pub fn build_sketches_in_parallel<I, D>(
+        mut self,
+        documents: I,
+        num_chunks: usize,
+    ) -> Result<Self>
+    where
+        I: Iterator<Item = D> + Send,
+        D: AsRef<str> + Send,
+    {
+        let extractor = FeatureExtractor::new(self.config);
+        let mut sketches: Vec<_> = documents
+            .into_iter()
+            .enumerate()
+            .par_bridge()
+            .map(|(i, doc)| {
+                let doc = doc.as_ref();
+                // TODO: Returns the error value (but I dont know the manner).
+                assert!(!doc.is_empty(), "Input document must not be empty.");
+                let mut feature = vec![];
+                extractor.extract(doc, &mut feature);
+                let mut gen = self.hasher.iter(&feature);
+                let sketch: Vec<_> = (0..num_chunks).map(|_| gen.next().unwrap()).collect();
+                (i, sketch)
+            })
+            .collect();
+        sketches.par_sort_by_key(|&(i, _)| i);
+
+        let mut joiner = ChunkedJoiner::<u64>::new(num_chunks).shows_progress(self.shows_progress);
+        for (_, sketch) in sketches {
+            joiner.add(sketch).unwrap();
         }
         self.joiner = Some(joiner);
         Ok(self)

@@ -120,7 +120,8 @@ impl CosineSearcher {
         D: AsRef<str>,
     {
         let mut joiner = ChunkedJoiner::<u64>::new(num_chunks).shows_progress(self.shows_progress);
-        let mut extractor = FeatureExtractor::new(self.config);
+        let extractor = FeatureExtractor::new(self.config);
+
         let mut feature = vec![];
         for (i, doc) in documents.into_iter().enumerate() {
             if self.shows_progress && (i + 1) % 10000 == 0 {
