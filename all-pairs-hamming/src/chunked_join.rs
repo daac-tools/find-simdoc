@@ -1,5 +1,7 @@
 use anyhow::{anyhow, Result};
 
+use hashbrown::HashSet;
+
 use crate::multi_sort::MultiSort;
 use crate::sketch::Sketch;
 
@@ -48,15 +50,14 @@ where
         }
 
         // TODO: Threading.
-        let mut candidates = vec![];
+        let mut candidates = HashSet::new();
         for (j, chunk) in self.chunks.iter().enumerate() {
             // Based on the general pigeonhole principle.
             if j + hamradius + 1 < self.chunks.len() {
                 continue;
             }
             let r = (j + hamradius + 1 - self.chunks.len()) / self.chunks.len();
-            let results = MultiSort::new().similar_pairs(chunk, r);
-            candidates.extend(results);
+            MultiSort::new().similar_pairs(chunk, r, &mut candidates);
 
             if self.shows_progress {
                 eprintln!(
@@ -65,7 +66,7 @@ where
                     self.chunks.len()
                 );
                 eprintln!(
-                    "[ChunkedJoiner::similar_pairs] #non-unique-candidates={}",
+                    "[ChunkedJoiner::similar_pairs] #unique-candidates={}",
                     candidates.len()
                 );
             }
@@ -74,14 +75,8 @@ where
             eprintln!("[ChunkedJoiner::similar_pairs] Done");
         }
 
+        let mut candidates: Vec<_> = candidates.into_iter().collect();
         candidates.sort_unstable();
-        candidates.dedup();
-        if self.shows_progress {
-            eprintln!(
-                "[ChunkedJoiner::similar_pairs] #unique-candidates={}",
-                candidates.len()
-            );
-        }
 
         let mut matched = vec![];
         for (i, j) in candidates {

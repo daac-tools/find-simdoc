@@ -1,6 +1,8 @@
 use std::cell::RefCell;
 use std::ops::Range;
 
+use hashbrown::HashSet;
+
 use crate::bitset64::Bitset64;
 use crate::sketch::Sketch;
 
@@ -65,7 +67,12 @@ where
     }
 
     /// Reports all similar pairs whose Hamming distance is within `radius`.
-    pub fn similar_pairs(mut self, sketches: &[S], radius: usize) -> Vec<(usize, usize)> {
+    pub fn similar_pairs(
+        mut self,
+        sketches: &[S],
+        radius: usize,
+        results: &mut HashSet<(usize, usize)>,
+    ) {
         if self.num_blocks == 0 || self.num_blocks < radius {
             // Following Tabei's paper.
             self.num_blocks = S::dim().min(radius + 3);
@@ -80,9 +87,7 @@ where
             .enumerate()
             .map(|(id, &sketch)| Record { id, sketch })
             .collect();
-        let mut results = vec![];
-        self.similar_pairs_recur(&mut records, Bitset64::new(), &mut results);
-        results
+        self.similar_pairs_recur(&mut records, Bitset64::new(), results);
     }
 
     fn build_masks_and_offsets(&mut self) {
@@ -103,7 +108,7 @@ where
         &self,
         records: &mut [Record<S>],
         blocks: Bitset64,
-        results: &mut Vec<(usize, usize)>,
+        results: &mut HashSet<(usize, usize)>,
     ) {
         if blocks.len() == self.num_blocks - self.radius {
             self.verify_all_pairs(records, blocks, results);
@@ -126,7 +131,7 @@ where
         &self,
         records: &[Record<S>],
         blocks: Bitset64,
-        results: &mut Vec<(usize, usize)>,
+        results: &mut HashSet<(usize, usize)>,
     ) {
         for i in 0..records.len() {
             let x = &records[i];
@@ -136,8 +141,8 @@ where
                     && self.check_canonical(x.sketch, y.sketch, blocks)
                 {
                     debug_assert_ne!(x.id, y.id);
-                    // Keeps the order to ease debug.
-                    results.push((x.id.min(y.id), x.id.max(y.id)));
+                    // Keeps the tuple order to ease debug.
+                    results.insert((x.id.min(y.id), x.id.max(y.id)));
                 }
             }
         }
@@ -270,10 +275,12 @@ mod tests {
     fn test_similar_pairs(radius: usize, num_blocks: usize) {
         let sketches = example_sketches();
         let expected = naive_search(&sketches, radius);
-        let mut results = MultiSort::new()
+        let mut results = HashSet::new();
+        MultiSort::new()
             .num_blocks(num_blocks)
             .threshold_in_sort(5)
-            .similar_pairs(&sketches, radius);
+            .similar_pairs(&sketches, radius, &mut results);
+        let mut results: Vec<_> = results.into_iter().collect();
         results.sort_unstable();
         assert_eq!(results, expected);
     }
