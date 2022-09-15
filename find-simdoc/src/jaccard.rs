@@ -129,6 +129,7 @@ impl JaccardSearcher {
         D: AsRef<str> + Send,
     {
         let extractor = FeatureExtractor::new(self.config);
+        // TODO: Show progress
         let mut sketches: Vec<_> = documents
             .into_iter()
             .enumerate()
