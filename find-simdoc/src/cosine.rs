@@ -6,6 +6,7 @@ use crate::tfidf::{Idf, Tf};
 use all_pairs_hamming::chunked_join::ChunkedJoiner;
 use lsh::simhash::SimHasher;
 use rand::{RngCore, SeedableRng};
+use rayon::prelude::*;
 
 /// Searcher for all-pair similar documents in the Cosine space.
 ///
@@ -57,7 +58,7 @@ use rand::{RngCore, SeedableRng};
 pub struct CosineSearcher {
     config: FeatureConfig,
     hasher: SimHasher,
-    tf: Option<Tf<u64>>,
+    tf: Option<Tf>,
     idf: Option<Idf<u64>>,
     joiner: Option<ChunkedJoiner<u64>>,
     shows_progress: bool,
@@ -95,7 +96,7 @@ impl CosineSearcher {
 
     /// Sets the scheme of TF weighting.
     #[allow(clippy::missing_const_for_fn)]
-    pub fn tf(mut self, tf: Option<Tf<u64>>) -> Self {
+    pub fn tf(mut self, tf: Option<Tf>) -> Self {
         self.tf = tf;
         self
     }
@@ -132,7 +133,7 @@ impl CosineSearcher {
                 return Err(FindSimdocError::input("Input document must not be empty."));
             }
             extractor.extract_with_weights(doc, &mut feature);
-            if let Some(tf) = self.tf.as_mut() {
+            if let Some(tf) = self.tf.as_ref() {
                 tf.tf(&mut feature);
             }
             if let Some(idf) = self.idf.as_ref() {
@@ -141,6 +142,60 @@ impl CosineSearcher {
                 }
             }
             joiner.add(self.hasher.iter(&feature)).unwrap();
+        }
+        self.joiner = Some(joiner);
+        Ok(self)
+    }
+
+    /// Builds the database of sketches from input documents in parallel.
+    ///
+    /// # Arguments
+    ///
+    /// * `documents` - List of documents (must not include an empty string).
+    /// * `num_chunks` - Number of chunks of sketches, indicating that
+    ///                  the number of dimensions in the Hamming space is `num_chunks*64`.
+    ///
+    /// # Notes
+    ///
+    /// The progress is not printed even if `shows_progress = true`.
+    pub fn build_sketches_in_parallel<I, D>(
+        mut self,
+        documents: I,
+        num_chunks: usize,
+    ) -> Result<Self>
+    where
+        I: Iterator<Item = D> + Send,
+        D: AsRef<str> + Send,
+    {
+        let extractor = FeatureExtractor::new(self.config);
+        let mut sketches: Vec<_> = documents
+            .into_iter()
+            .enumerate()
+            .par_bridge()
+            .map(|(i, doc)| {
+                let doc = doc.as_ref();
+                // TODO: Returns the error value (but I dont know the manner).
+                assert!(!doc.is_empty(), "Input document must not be empty.");
+                let mut feature = vec![];
+                extractor.extract_with_weights(doc, &mut feature);
+                if let Some(tf) = self.tf.as_ref() {
+                    tf.tf(&mut feature);
+                }
+                if let Some(idf) = self.idf.as_ref() {
+                    for (term, weight) in feature.iter_mut() {
+                        *weight *= idf.idf(*term);
+                    }
+                }
+                let mut gen = self.hasher.iter(&feature);
+                let sketch: Vec<_> = (0..num_chunks).map(|_| gen.next().unwrap()).collect();
+                (i, sketch)
+            })
+            .collect();
+        sketches.par_sort_by_key(|&(i, _)| i);
+
+        let mut joiner = ChunkedJoiner::<u64>::new(num_chunks).shows_progress(self.shows_progress);
+        for (_, sketch) in sketches {
+            joiner.add(sketch).unwrap();
         }
         self.joiner = Some(joiner);
         Ok(self)

@@ -86,15 +86,11 @@ impl Idf<u64> {
 
 /// Weighter of term frequency.
 #[derive(Default)]
-pub struct Tf<T> {
-    counter: HashMap<T, usize>,
+pub struct Tf {
     sublinear: bool,
 }
 
-impl<T> Tf<T>
-where
-    T: Hash + Eq + Copy + Default,
-{
+impl Tf {
     /// Creates an instance.
     pub fn new() -> Self {
         Self::default()
@@ -107,11 +103,14 @@ where
     }
 
     /// Computes the TF of input terms.
-    pub fn tf(&mut self, terms: &mut [(T, f64)]) {
-        self.count(terms);
+    pub fn tf<T>(&self, terms: &mut [(T, f64)])
+    where
+        T: Hash + Eq + Copy + Default,
+    {
+        let counter = self.count(terms);
         let total = terms.len() as f64;
         for (term, weight) in terms {
-            let cnt = *self.counter.get(term).unwrap() as f64;
+            let cnt = *counter.get(term).unwrap() as f64;
             *weight = if self.sublinear {
                 cnt.log10() + 1.
             } else {
@@ -120,14 +119,15 @@ where
         }
     }
 
-    fn count(&mut self, terms: &mut [(T, f64)]) {
-        self.counter.clear();
+    fn count<T>(&self, terms: &mut [(T, f64)]) -> HashMap<T, usize>
+    where
+        T: Hash + Eq + Copy + Default,
+    {
+        let mut counter = HashMap::new();
         for &(term, _) in terms.iter() {
-            self.counter
-                .entry(term)
-                .and_modify(|c| *c += 1)
-                .or_insert(1);
+            counter.entry(term).and_modify(|c| *c += 1).or_insert(1);
         }
+        counter
     }
 }
 
