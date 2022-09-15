@@ -67,7 +67,7 @@ where
                     self.chunks.len()
                 );
                 eprintln!(
-                    "[ChunkedJoiner::similar_pairs] #unique-candidates={}",
+                    "[ChunkedJoiner::similar_pairs] #candidates={}",
                     candidates.len()
                 );
             }
