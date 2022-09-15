@@ -94,6 +94,10 @@ struct Args {
     /// Seed value for random values.
     #[clap(short = 's', long)]
     seed: Option<u64>,
+
+    /// Disables parallel construction.
+    #[clap(short = 'p', long)]
+    disable_parallel: bool,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -107,6 +111,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let tf_weight = args.tf;
     let idf_weight = args.idf;
     let seed = args.seed;
+    let disable_parallel = args.disable_parallel;
 
     let mut searcher = CosineSearcher::new(window_size, delimiter, seed)?.shows_progress(true);
 
@@ -138,8 +143,11 @@ fn main() -> Result<(), Box<dyn Error>> {
         eprintln!("Converting documents into sketches...");
         let start = Instant::now();
         let documents = texts_iter(File::open(&document_path)?);
-        // searcher = searcher.build_sketches(documents, num_chunks)?;
-        searcher = searcher.build_sketches_in_parallel(documents, num_chunks)?;
+        searcher = if disable_parallel {
+            searcher.build_sketches(documents, num_chunks)?
+        } else {
+            searcher.build_sketches_in_parallel(documents, num_chunks)?
+        };
         let duration = start.elapsed();
         let memory_in_bytes = searcher.memory_in_bytes() as f64;
         eprintln!(
