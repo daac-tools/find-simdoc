@@ -274,4 +274,4 @@ dual licensed as above, without any additional terms or conditions.
 
 ## TODO
 
-- Add threading
+- Use multi threads for slow minwise hashing.
