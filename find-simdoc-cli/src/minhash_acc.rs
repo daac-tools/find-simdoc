@@ -21,6 +21,7 @@ const MAX_CHUNKS: usize = 100;
 )]
 struct Args {
     /// File path to a document file to be searched.
+    /// Empty lines must not be included.
     #[clap(short = 'i', long)]
     document_path: PathBuf,
 
@@ -58,7 +59,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         rand_xoshiro::SplitMix64::seed_from_u64(seed.unwrap_or_else(rand::random::<u64>));
 
     let config = FeatureConfig::new(window_size, delimiter, seeder.next_u64())?;
-    let mut extractor = FeatureExtractor::new(config);
+    let extractor = FeatureExtractor::new(config);
 
     let features = {
         eprintln!("Loading documents and extracting features...");

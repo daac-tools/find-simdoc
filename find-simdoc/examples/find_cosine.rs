@@ -24,7 +24,7 @@ fn main() {
         // the IDF weighter,
         .idf(Some(idf))
         // where binary sketches are in the Hamming space of 10*64 dimensions.
-        .build_sketches(documents, 10)
+        .build_sketches_in_parallel(documents.iter(), 10)
         .unwrap();
 
     // Searches all similar pairs within radius 0.25.

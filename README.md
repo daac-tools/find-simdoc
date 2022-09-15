@@ -32,7 +32,7 @@ First of all, install `rustc` and `cargo` following the [official instructions](
 
 ### 1. Data preparation
 
-You have to prepare a text file containing documents line by line.
+You have to prepare a text file containing documents line by line (NOT including empty lines).
 
 To produce an example file used throughout this description, you can use `scripts/load_nltk_dataset.py` that downloads the Reuters Corpus provided by NLTK.
 Run the following command.
@@ -274,5 +274,5 @@ dual licensed as above, without any additional terms or conditions.
 
 ## TODO
 
-- Use multi threads for slow minwise hashing.
+- Print progress in parallel construction.
 - Release `all-pairs-hamming` in crate.io.

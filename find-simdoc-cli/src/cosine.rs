@@ -55,6 +55,7 @@ impl FromStr for IdfWeights {
 )]
 struct Args {
     /// File path to a document file to be searched.
+    /// Empty lines must not be included.
     #[clap(short = 'i', long)]
     document_path: PathBuf,
 
@@ -94,6 +95,10 @@ struct Args {
     /// Seed value for random values.
     #[clap(short = 's', long)]
     seed: Option<u64>,
+
+    /// Disables parallel construction.
+    #[clap(short = 'p', long)]
+    disable_parallel: bool,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -107,13 +112,14 @@ fn main() -> Result<(), Box<dyn Error>> {
     let tf_weight = args.tf;
     let idf_weight = args.idf;
     let seed = args.seed;
+    let disable_parallel = args.disable_parallel;
 
     let mut searcher = CosineSearcher::new(window_size, delimiter, seed)?.shows_progress(true);
 
     let tf = match tf_weight {
         TfWeights::Binary => None,
         TfWeights::Standard | TfWeights::Sublinear => {
-            Some(Tf::<u64>::new().sublinear(tf_weight == TfWeights::Sublinear))
+            Some(Tf::new().sublinear(tf_weight == TfWeights::Sublinear))
         }
     };
 
@@ -138,7 +144,11 @@ fn main() -> Result<(), Box<dyn Error>> {
         eprintln!("Converting documents into sketches...");
         let start = Instant::now();
         let documents = texts_iter(File::open(&document_path)?);
-        searcher = searcher.build_sketches(documents, num_chunks)?;
+        searcher = if disable_parallel {
+            searcher.build_sketches(documents, num_chunks)?
+        } else {
+            searcher.build_sketches_in_parallel(documents, num_chunks)?
+        };
         let duration = start.elapsed();
         let memory_in_bytes = searcher.memory_in_bytes() as f64;
         eprintln!(
