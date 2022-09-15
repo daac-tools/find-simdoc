@@ -79,12 +79,15 @@ where
         let mut candidates: Vec<_> = candidates.into_iter().collect();
         candidates.sort_unstable();
 
+        let bound = (dimension as f64 * radius) as usize;
         let mut matched = vec![];
+
         for (i, j) in candidates {
-            let dist = self.hamming_distance(i, j);
-            let dist = dist as f64 / dimension as f64;
-            if dist <= radius {
-                matched.push((i, j, dist));
+            if let Some(dist) = self.hamming_distance(i, j, bound) {
+                let dist = dist as f64 / dimension as f64;
+                if dist <= radius {
+                    matched.push((i, j, dist));
+                }
             }
         }
         if self.shows_progress {
@@ -105,12 +108,15 @@ where
         self.num_chunks() * self.num_sketches() * std::mem::size_of::<S>()
     }
 
-    fn hamming_distance(&self, i: usize, j: usize) -> usize {
+    fn hamming_distance(&self, i: usize, j: usize, bound: usize) -> Option<usize> {
         let mut dist = 0;
         for chunk in &self.chunks {
             dist += chunk[i].hamdist(chunk[j]);
+            if bound < dist {
+                return None;
+            }
         }
-        dist
+        Some(dist)
     }
 }
 

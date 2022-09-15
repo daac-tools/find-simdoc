@@ -49,7 +49,9 @@ where
             eprintln!("[SimpleJoiner::similar_pairs] #dimensions={dimension}");
         }
 
+        let bound = (dimension as f64 * radius) as usize;
         let mut matched = vec![];
+
         for i in 0..self.sketches.len() {
             if self.shows_progress && (i + 1) % 1000 == 0 {
                 eprintln!(
@@ -59,10 +61,11 @@ where
                 );
             }
             for j in i + 1..self.sketches.len() {
-                let dist = self.hamming_distance(i, j);
-                let dist = dist as f64 / dimension as f64;
-                if dist <= radius {
-                    matched.push((i, j, dist));
+                if let Some(dist) = self.hamming_distance(i, j, bound) {
+                    let dist = dist as f64 / dimension as f64;
+                    if dist <= radius {
+                        matched.push((i, j, dist));
+                    }
                 }
             }
         }
@@ -85,14 +88,17 @@ where
         self.num_chunks() * self.num_sketches() * std::mem::size_of::<S>()
     }
 
-    fn hamming_distance(&self, i: usize, j: usize) -> usize {
+    fn hamming_distance(&self, i: usize, j: usize, bound: usize) -> Option<usize> {
         let xs = &self.sketches[i];
         let ys = &self.sketches[j];
         let mut dist = 0;
         for (&x, &y) in xs.iter().zip(ys.iter()) {
             dist += x.hamdist(y);
+            if bound < dist {
+                return None;
+            }
         }
-        dist
+        Some(dist)
     }
 }
 
