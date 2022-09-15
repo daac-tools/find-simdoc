@@ -35,7 +35,7 @@ use rayon::prelude::*;
 ///     .unwrap()
 ///     // Builds the database of binary sketches converted from input documents,
 ///     // where binary sketches are in the Hamming space of 20*64 dimensions.
-///     .build_sketches(documents, 20)
+///     .build_sketches_in_parallel(documents.iter(), 20)
 ///     .unwrap();
 ///
 /// // Searches all similar pairs within radius 0.25.
