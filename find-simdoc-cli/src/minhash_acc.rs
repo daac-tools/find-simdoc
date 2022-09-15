@@ -21,6 +21,7 @@ const MAX_CHUNKS: usize = 100;
 )]
 struct Args {
     /// File path to a document file to be searched.
+    /// Empty lines must not be included.
     #[clap(short = 'i', long)]
     document_path: PathBuf,
 
