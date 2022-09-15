@@ -92,7 +92,7 @@ impl JaccardSearcher {
         let mut extractor = FeatureExtractor::new(self.config);
         let mut feature = vec![];
         for (i, doc) in documents.into_iter().enumerate() {
-            if self.shows_progress && (i + 1) % 1000 == 0 {
+            if self.shows_progress && (i + 1) % 10000 == 0 {
                 eprintln!("Processed {} documents...", i + 1);
             }
             let doc = doc.as_ref();
