@@ -1,5 +1,9 @@
 # Finding all-pair similar documents
 
+[![Crates.io](https://img.shields.io/crates/v/find-simdoc)](https://crates.io/crates/find-simdoc)
+[![Documentation](https://docs.rs/find-simdoc/badge.svg)](https://docs.rs/find-simdoc)
+![Build Status](https://github.com/legalforce-research/find-simdoc/actions/workflows/rust.yml/badge.svg)
+
 This software provides time- and memory-efficient all-pair similarity searches in documents.
 
 ## Problem definition
