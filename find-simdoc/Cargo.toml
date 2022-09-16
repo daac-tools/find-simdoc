@@ -14,10 +14,10 @@ categories = ["text-processing", "algorithms"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+ahash = "0.8.0" # MIT or Apache-2.0
 all-pairs-hamming = { path = "../all-pairs-hamming" } # MIT or Apache-2.0
-fasthash = "0.4.0" # Apache-2.0
 hashbrown = "0.12.3" # MIT or Apache-2.0
 lsh = { path = "../lsh" } # MIT or Apache-2.0
 rand = "0.8.5" # MIT or Apache-2.0
 rand_xoshiro = "0.6.0" # MIT or Apache-2.0
-rayon = "1.5.3"
+rayon = "1.5.3" # MIT or Apache-2.0

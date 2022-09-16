@@ -40,7 +40,7 @@ use rayon::prelude::*;
 ///
 /// // Searches all similar pairs within radius 0.25.
 /// let results = searcher.search_similar_pairs(0.25);
-/// assert_eq!(results, vec![(0, 1, 0.1875), (0, 3, 0.2296875)]);
+/// assert_eq!(results, vec![(0, 1, 0.19375), (0, 2, 0.2125), (0, 3, 0.2328125)]);
 /// ```
 pub struct JaccardSearcher {
     config: FeatureConfig,
@@ -90,7 +90,7 @@ impl JaccardSearcher {
         D: AsRef<str>,
     {
         let mut joiner = ChunkedJoiner::<u64>::new(num_chunks).shows_progress(self.shows_progress);
-        let extractor = FeatureExtractor::new(self.config);
+        let extractor = FeatureExtractor::new(&self.config);
 
         let mut feature = vec![];
         for (i, doc) in documents.into_iter().enumerate() {
@@ -128,7 +128,7 @@ impl JaccardSearcher {
         I: Iterator<Item = D> + Send,
         D: AsRef<str> + Send,
     {
-        let extractor = FeatureExtractor::new(self.config);
+        let extractor = FeatureExtractor::new(&self.config);
         // TODO: Show progress
         let mut sketches: Vec<_> = documents
             .into_iter()
@@ -188,7 +188,7 @@ impl JaccardSearcher {
     }
 
     /// Gets the configure of feature extraction.
-    pub const fn config(&self) -> FeatureConfig {
-        self.config
+    pub const fn config(&self) -> &FeatureConfig {
+        &self.config
     }
 }

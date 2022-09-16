@@ -53,7 +53,7 @@ use rayon::prelude::*;
 /// // Searches all similar pairs within radius 0.25.
 /// let results = searcher.search_similar_pairs(0.25);
 /// // A result consists of the left-side id, the right-side id, and their distance.
-/// assert_eq!(results, vec![(0, 1, 0.1671875), (0, 3, 0.246875)]);
+/// assert_eq!(results, vec![(0, 1, 0.1296875), (0, 3, 0.24375)]);
 /// ```
 pub struct CosineSearcher {
     config: FeatureConfig,
@@ -121,7 +121,7 @@ impl CosineSearcher {
         D: AsRef<str>,
     {
         let mut joiner = ChunkedJoiner::<u64>::new(num_chunks).shows_progress(self.shows_progress);
-        let extractor = FeatureExtractor::new(self.config);
+        let extractor = FeatureExtractor::new(&self.config);
 
         let mut feature = vec![];
         for (i, doc) in documents.into_iter().enumerate() {
@@ -167,7 +167,7 @@ impl CosineSearcher {
         I: Iterator<Item = D> + Send,
         D: AsRef<str> + Send,
     {
-        let extractor = FeatureExtractor::new(self.config);
+        let extractor = FeatureExtractor::new(&self.config);
         // TODO: Show progress
         let mut sketches: Vec<_> = documents
             .into_iter()
@@ -228,7 +228,7 @@ impl CosineSearcher {
     }
 
     /// Gets the configure of feature extraction.
-    pub const fn config(&self) -> FeatureConfig {
-        self.config
+    pub const fn config(&self) -> &FeatureConfig {
+        &self.config
     }
 }
