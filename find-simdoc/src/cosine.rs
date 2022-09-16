@@ -170,13 +170,16 @@ impl CosineSearcher {
         D: AsRef<str> + Send,
     {
         let extractor = FeatureExtractor::new(&self.config);
+        #[allow(clippy::mutex_atomic)]
         let processed = Mutex::new(0usize);
         let mut sketches: Vec<_> = documents
             .into_iter()
             .enumerate()
             .par_bridge()
             .map(|(i, doc)| {
+                #[allow(clippy::mutex_atomic)]
                 {
+                    // Mutex::lock also locks eprintln.
                     let mut cnt = processed.lock().unwrap();
                     *cnt += 1;
                     if self.shows_progress && *cnt % 10000 == 0 {
