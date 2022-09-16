@@ -1,7 +1,9 @@
+//! An exhaustive approach of all-pair similarity search on binary sketches.
 use anyhow::{anyhow, Result};
 
 use crate::sketch::Sketch;
 
+/// An exhaustive approach of all-pair similarity search on binary sketches.
 pub struct SimpleJoiner<S> {
     sketches: Vec<Vec<S>>,
     num_chunks: usize,
@@ -12,6 +14,8 @@ impl<S> SimpleJoiner<S>
 where
     S: Sketch,
 {
+    /// Creates an instance, handling sketches of `num_chunks` chunks, i.e.,
+    /// in `S::dim() * num_chunks` dimensions.
     pub const fn new(num_chunks: usize) -> Self {
         Self {
             sketches: vec![],
@@ -20,11 +24,15 @@ where
         }
     }
 
+    /// Prints the progress with stderr?
     pub const fn shows_progress(mut self, yes: bool) -> Self {
         self.shows_progress = yes;
         self
     }
 
+    /// Appends a sketch of [`Self::num_chunks()`] chunks.
+    /// The first [`Self::num_chunks()`] elements of an input iterator is stored.
+    /// If the iterator is consumed until obtaining the elements, an error is returned.
     pub fn add<I>(&mut self, sketch: I) -> Result<()>
     where
         I: IntoIterator<Item = S>,
@@ -43,6 +51,8 @@ where
         Ok(())
     }
 
+    /// Finds all similar pairs whose normalized Hamming distance is within `radius`,
+    /// returning triplets of the left-side id, the right-side id, and thier distance.
     pub fn similar_pairs(&self, radius: f64) -> Vec<(usize, usize, f64)> {
         let dimension = S::dim() * self.num_chunks();
         if self.shows_progress {
@@ -53,7 +63,7 @@ where
         let mut matched = vec![];
 
         for i in 0..self.sketches.len() {
-            if self.shows_progress && (i + 1) % 1000 == 0 {
+            if self.shows_progress && (i + 1) % 10000 == 0 {
                 eprintln!(
                     "[SimpleJoiner::similar_pairs] Processed {}/{}...",
                     i + 1,
@@ -76,14 +86,17 @@ where
         matched
     }
 
+    /// Gets the number of chunks.
     pub const fn num_chunks(&self) -> usize {
         self.num_chunks
     }
 
+    /// Gets the number of stored sketches.
     pub fn num_sketches(&self) -> usize {
         self.sketches.len()
     }
 
+    /// Gets the memory usage in bytes.
     pub fn memory_in_bytes(&self) -> usize {
         self.num_chunks() * self.num_sketches() * std::mem::size_of::<S>()
     }
