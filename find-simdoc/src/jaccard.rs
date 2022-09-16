@@ -90,7 +90,7 @@ impl JaccardSearcher {
         D: AsRef<str>,
     {
         let mut joiner = ChunkedJoiner::<u64>::new(num_chunks).shows_progress(self.shows_progress);
-        let extractor = FeatureExtractor::new(self.config);
+        let extractor = FeatureExtractor::new(&self.config);
 
         let mut feature = vec![];
         for (i, doc) in documents.into_iter().enumerate() {
@@ -128,7 +128,7 @@ impl JaccardSearcher {
         I: Iterator<Item = D> + Send,
         D: AsRef<str> + Send,
     {
-        let extractor = FeatureExtractor::new(self.config);
+        let extractor = FeatureExtractor::new(&self.config);
         // TODO: Show progress
         let mut sketches: Vec<_> = documents
             .into_iter()
@@ -188,7 +188,7 @@ impl JaccardSearcher {
     }
 
     /// Gets the configure of feature extraction.
-    pub const fn config(&self) -> FeatureConfig {
-        self.config
+    pub const fn config(&self) -> &FeatureConfig {
+        &self.config
     }
 }

@@ -65,7 +65,7 @@ impl Idf<u64> {
     ///
     /// * `documents` - List of documents.
     /// * `config` - Configuration of feature extraction. Use the same configuration as that in search.
-    pub fn build<I, D>(mut self, documents: I, config: FeatureConfig) -> Result<Self>
+    pub fn build<I, D>(mut self, documents: I, config: &FeatureConfig) -> Result<Self>
     where
         I: IntoIterator<Item = D>,
         D: AsRef<str>,

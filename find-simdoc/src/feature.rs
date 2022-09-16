@@ -3,16 +3,17 @@ use std::hash::{BuildHasher, Hash, Hasher};
 use std::ops::Range;
 
 use ahash::RandomState;
+use rand::{RngCore, SeedableRng};
 
 use crate::errors::{FindSimdocError, Result};
 use crate::shingling::ShingleIter;
 
 /// Configuration of feature extraction.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 pub struct FeatureConfig {
     window_size: usize,
     delimiter: Option<char>,
-    seed: u64,
+    build_hasher: RandomState,
 }
 
 impl FeatureConfig {
@@ -24,14 +25,21 @@ impl FeatureConfig {
     /// * `delimiter` - Delimiter for recognizing words as tokens in feature extraction.
     ///                 If `None`, characters are used for tokens.
     /// * `seed` - Seed value for random values.
-    pub const fn new(window_size: usize, delimiter: Option<char>, seed: u64) -> Result<Self> {
+    pub fn new(window_size: usize, delimiter: Option<char>, seed: u64) -> Result<Self> {
         if window_size == 0 {
             return Err(FindSimdocError::input("Window size must not be 0."));
         }
+        let mut seeder = rand_xoshiro::SplitMix64::seed_from_u64(seed);
+        let build_hasher = RandomState::with_seeds(
+            seeder.next_u64(),
+            seeder.next_u64(),
+            seeder.next_u64(),
+            seeder.next_u64(),
+        );
         Ok(Self {
             window_size,
             delimiter,
-            seed,
+            build_hasher,
         })
     }
 
@@ -40,7 +48,7 @@ impl FeatureConfig {
         I: IntoIterator<Item = T>,
         T: Hash,
     {
-        let mut s = RandomState::with_seed(self.seed as usize).build_hasher();
+        let mut s = self.build_hasher.build_hasher();
         for t in iter {
             t.hash(&mut s);
         }
@@ -49,13 +57,13 @@ impl FeatureConfig {
 }
 
 /// Extractor of feature vectors.
-pub struct FeatureExtractor {
-    config: FeatureConfig,
+pub struct FeatureExtractor<'a> {
+    config: &'a FeatureConfig,
 }
 
-impl FeatureExtractor {
+impl<'a> FeatureExtractor<'a> {
     /// Creates an instance.
-    pub const fn new(config: FeatureConfig) -> Self {
+    pub const fn new(config: &'a FeatureConfig) -> Self {
         Self { config }
     }
 
@@ -141,7 +149,7 @@ mod tests {
     #[test]
     fn test_char_unigram() {
         let config = FeatureConfig::new(1, None, 42).unwrap();
-        let extractor = FeatureExtractor::new(config);
+        let extractor = FeatureExtractor::new(&config);
 
         let text = "abcd";
         let mut feature = vec![];
@@ -156,7 +164,7 @@ mod tests {
     #[test]
     fn test_char_bigram() {
         let config = FeatureConfig::new(2, None, 42).unwrap();
-        let extractor = FeatureExtractor::new(config);
+        let extractor = FeatureExtractor::new(&config);
 
         let text = "abcd";
         let mut feature = vec![];
@@ -177,7 +185,7 @@ mod tests {
     #[test]
     fn test_char_trigram() {
         let config = FeatureConfig::new(3, None, 42).unwrap();
-        let extractor = FeatureExtractor::new(config);
+        let extractor = FeatureExtractor::new(&config);
 
         let text = "abcd";
         let mut feature = vec![];
@@ -199,7 +207,7 @@ mod tests {
     #[test]
     fn test_word_unigram() {
         let config = FeatureConfig::new(1, Some(' '), 42).unwrap();
-        let extractor = FeatureExtractor::new(config);
+        let extractor = FeatureExtractor::new(&config);
 
         let text = "abc de fgh";
         let mut feature = vec![];
@@ -218,7 +226,7 @@ mod tests {
     #[test]
     fn test_word_bigram() {
         let config = FeatureConfig::new(2, Some(' '), 42).unwrap();
-        let extractor = FeatureExtractor::new(config);
+        let extractor = FeatureExtractor::new(&config);
 
         let text = "abc de fgh";
         let mut feature = vec![];
@@ -238,7 +246,7 @@ mod tests {
     #[test]
     fn test_word_trigram() {
         let config = FeatureConfig::new(3, Some(' '), 42).unwrap();
-        let extractor = FeatureExtractor::new(config);
+        let extractor = FeatureExtractor::new(&config);
 
         let text = "abc de fgh";
         let mut feature = vec![];
