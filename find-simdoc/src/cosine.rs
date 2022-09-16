@@ -1,4 +1,6 @@
 //! Searcher for all-pair similar documents in the Cosine space.
+use std::sync::Mutex;
+
 use crate::errors::{FindSimdocError, Result};
 use crate::feature::{FeatureConfig, FeatureExtractor};
 use crate::tfidf::{Idf, Tf};
@@ -168,12 +170,19 @@ impl CosineSearcher {
         D: AsRef<str> + Send,
     {
         let extractor = FeatureExtractor::new(&self.config);
-        // TODO: Show progress
+        let processed = Mutex::new(0usize);
         let mut sketches: Vec<_> = documents
             .into_iter()
             .enumerate()
             .par_bridge()
             .map(|(i, doc)| {
+                {
+                    let mut cnt = processed.lock().unwrap();
+                    *cnt += 1;
+                    if self.shows_progress && *cnt % 10000 == 0 {
+                        eprintln!("Processed {} documents...", *cnt);
+                    }
+                }
                 let doc = doc.as_ref();
                 // TODO: Returns the error value (but I dont know the manner).
                 assert!(!doc.is_empty(), "Input document must not be empty.");
