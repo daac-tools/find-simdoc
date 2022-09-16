@@ -1,3 +1,4 @@
+//! Locality-sensitive hashings.
 pub mod minhash;
 pub mod simhash;
 
@@ -6,11 +7,13 @@ use std::hash::Hash;
 use hashbrown::HashSet;
 use rand_xoshiro::rand_core::{RngCore, SeedableRng};
 
+/// Generates a hash value.
 #[inline(always)]
-pub fn hash_u64(x: u64, seed: u64) -> u64 {
+pub(crate) fn hash_u64(x: u64, seed: u64) -> u64 {
     rand_xoshiro::SplitMix64::seed_from_u64(x ^ seed).next_u64()
 }
 
+/// Computes the Jaccard distance.
 pub fn jaccard_distance<I, T>(lhs: I, rhs: I) -> f64
 where
     I: IntoIterator<Item = T>,

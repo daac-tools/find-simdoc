@@ -8,8 +8,8 @@ use std::time::Instant;
 use all_pairs_hamming::sketch::Sketch;
 use clap::Parser;
 use find_simdoc::feature::{FeatureConfig, FeatureExtractor};
+use find_simdoc::lsh::minhash::MinHasher;
 use hashbrown::HashSet;
-use lsh::minhash::MinHasher;
 use rand::{RngCore, SeedableRng};
 
 const MAX_CHUNKS: usize = 100;
@@ -120,7 +120,10 @@ fn main() -> Result<(), Box<dyn Error>> {
             }
             let x = &features[i];
             for y in features.iter().skip(i + 1) {
-                jac_dists.push(lsh::jaccard_distance(x.iter().clone(), y.iter().clone()));
+                jac_dists.push(find_simdoc::lsh::jaccard_distance(
+                    x.iter().clone(),
+                    y.iter().clone(),
+                ));
             }
         }
         let duration = start.elapsed();

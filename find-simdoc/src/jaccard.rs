@@ -1,9 +1,9 @@
 //! Searcher for all-pair similar documents in the Jaccard space.
 use crate::errors::{FindSimdocError, Result};
 use crate::feature::{FeatureConfig, FeatureExtractor};
+use crate::lsh::minhash::MinHasher;
 
 use all_pairs_hamming::chunked_join::ChunkedJoiner;
-use lsh::minhash::MinHasher;
 use rand::{RngCore, SeedableRng};
 use rayon::prelude::*;
 
