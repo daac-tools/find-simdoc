@@ -39,7 +39,7 @@ pub mod feature;
 pub mod jaccard;
 pub mod tfidf;
 
-pub(crate) mod shingling;
+mod shingling;
 
 pub use cosine::CosineSearcher;
 pub use jaccard::JaccardSearcher;
