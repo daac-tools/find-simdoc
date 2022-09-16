@@ -1,8 +1,8 @@
 //! Feature extractor.
-use std::hash::{Hash, Hasher};
+use std::hash::{BuildHasher, Hash, Hasher};
 use std::ops::Range;
 
-use fasthash::{CityHasher, FastHasher};
+use ahash::RandomState;
 
 use crate::errors::{FindSimdocError, Result};
 use crate::shingling::ShingleIter;
@@ -40,7 +40,7 @@ impl FeatureConfig {
         I: IntoIterator<Item = T>,
         T: Hash,
     {
-        let mut s = CityHasher::with_seed(self.seed);
+        let mut s = RandomState::with_seed(self.seed as usize).build_hasher();
         for t in iter {
             t.hash(&mut s);
         }
