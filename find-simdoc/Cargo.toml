@@ -15,9 +15,9 @@ categories = ["text-processing", "algorithms"]
 
 [dependencies]
 ahash = "0.8.0" # MIT or Apache-2.0
-all-pairs-hamming = { path = "../all-pairs-hamming" } # MIT or Apache-2.0
+all-pairs-hamming = { path = "../all-pairs-hamming", version = "0.1.0" } # MIT or Apache-2.0
 hashbrown = "0.12.3" # MIT or Apache-2.0
-lsh = { path = "../lsh" } # MIT or Apache-2.0
+lsh = { path = "../lsh", version = "0.1.0" } # MIT or Apache-2.0
 rand = "0.8.5" # MIT or Apache-2.0
 rand_xoshiro = "0.6.0" # MIT or Apache-2.0
 rayon = "1.5.3" # MIT or Apache-2.0
