@@ -1,4 +1,5 @@
 //! Time- and memory-efficient all-pair similarity searches in documents.
+//! A more detailed description can be found on the [project page](https://github.com/legalforce-research/find-simdoc).
 //!
 //! # Problem definition
 //!
