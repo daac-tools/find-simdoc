@@ -53,7 +53,7 @@ use rayon::prelude::*;
 /// // Searches all similar pairs within radius 0.25.
 /// let results = searcher.search_similar_pairs(0.25);
 /// // A result consists of the left-side id, the right-side id, and their distance.
-/// assert_eq!(results, vec![(0, 1, 0.1671875), (0, 3, 0.246875)]);
+/// assert_eq!(results, vec![(0, 1, 0.1296875), (0, 3, 0.24375)]);
 /// ```
 pub struct CosineSearcher {
     config: FeatureConfig,
