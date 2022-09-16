@@ -8,6 +8,20 @@ use crate::sketch::Sketch;
 
 /// A modified implementation of the sketch sorting with the multi-index approach.
 ///
+/// # Examples
+///
+/// ```
+/// use all_pairs_hamming::ChunkedJoiner;
+///
+/// let mut joiner = ChunkedJoiner::<u8>::new(2);
+/// joiner.add([0b1111, 0b1001]);
+/// joiner.add([0b1101, 0b1001]);
+/// joiner.add([0b0101, 0b0001]);
+///
+/// let mut results = joiner.similar_pairs(0.15);
+/// assert_eq!(results, vec![(0, 1, 0.0625), (1, 2, 0.125)]);
+/// ```
+///
 /// # References
 ///
 /// - Tabei, Uno, Sugiyama, and Tsuda.
