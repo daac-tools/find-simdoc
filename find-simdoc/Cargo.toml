@@ -3,7 +3,7 @@ name = "find-simdoc"
 version = "0.1.0"
 edition = "2021"
 authors = ["Shunsuke Kanda <shnsk.knd@gmail.com>"]
-description = "Fast all-pair similarity searches in documents."
+description = "Time- and memory-efficient all-pair similarity searches in documents."
 license = "MIT OR Apache-2.0"
 homepage = "https://github.com/legalforce-research/find-simdoc"
 repository = "https://github.com/legalforce-research/find-simdoc"
@@ -15,9 +15,9 @@ categories = ["text-processing", "algorithms"]
 
 [dependencies]
 all-pairs-hamming = { path = "../all-pairs-hamming" } # MIT or Apache-2.0
-fasthash = "0.4.0"                                    # Apache-2.0
-hashbrown = "0.12.3"                                  # MIT or Apache-2.0
-lsh = { path = "../lsh" }                             # MIT or Apache-2.0
-rand = "0.8.5"                                        # MIT or Apache-2.0
-rand_xoshiro = "0.6.0"                                # MIT or Apache-2.0
+fasthash = "0.4.0" # Apache-2.0
+hashbrown = "0.12.3" # MIT or Apache-2.0
+lsh = { path = "../lsh" } # MIT or Apache-2.0
+rand = "0.8.5" # MIT or Apache-2.0
+rand_xoshiro = "0.6.0" # MIT or Apache-2.0
 rayon = "1.5.3"

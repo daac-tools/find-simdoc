@@ -1,6 +1,6 @@
 # find-simdoc
 
-Fast all-pair similarity searches in documents.
+Time- and memory-efficient all-pair similarity searches in documents.
 The detailed description can be found on the [project page](https://github.com/legalforce-research/find-simdoc).
 
 ## Documentation
