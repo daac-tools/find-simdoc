@@ -3,6 +3,7 @@ use std::error::Error;
 use std::fmt::Write as _;
 use std::fs::File;
 use std::io::{BufRead, BufReader, BufWriter, Read, Write};
+use std::ops::DerefMut;
 use std::path::PathBuf;
 use std::sync::Mutex;
 use std::time::Instant;
@@ -132,12 +133,23 @@ fn main() -> Result<(), Box<dyn Error>> {
         let possible_pairs = features.len() * (features.len() - 1) / 2;
         eprintln!("Computing exact Jaccard distances for {possible_pairs} pairs...");
         let start = Instant::now();
+
+        #[allow(clippy::mutex_atomic)]
         {
-            let mut writer = BufWriter::new(File::create(TMP_FILENAME)?);
-            for i in 0..features.len() {
-                if (i + 1) % 100 == 0 {
-                    eprintln!("Processed {}/{}...", i + 1, features.len());
+            let processed = Mutex::new(0usize);
+            let writer = Mutex::new(BufWriter::new(File::create(TMP_FILENAME)?));
+
+            (0..features.len()).into_par_iter().for_each(|i| {
+                {
+                    // Mutex::lock also locks eprintln.
+                    let mut cnt = processed.lock().unwrap();
+                    *cnt += 1;
+                    if *cnt % 100 == 0 {
+                        eprintln!("Processed {} features...", *cnt);
+                    }
                 }
+                let mut jac_dists = Vec::with_capacity(features.len() - i);
+
                 let x = &features[i];
                 for (j, y) in features.iter().enumerate().skip(i + 1) {
                     let dist =
@@ -147,9 +159,15 @@ fn main() -> Result<(), Box<dyn Error>> {
                         j: j.try_into().unwrap(),
                         dist,
                     };
-                    jac_dist.encode(&mut writer);
+                    jac_dists.push(jac_dist);
                 }
-            }
+                {
+                    let mut w = writer.lock().unwrap();
+                    for jac_dist in jac_dists {
+                        jac_dist.encode(w.deref_mut());
+                    }
+                }
+            });
         }
         let duration = start.elapsed();
         eprintln!("Computed in {} sec", duration.as_secs_f64());
