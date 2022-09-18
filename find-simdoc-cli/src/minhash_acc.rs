@@ -1,12 +1,14 @@
+use std::convert::TryInto;
 use std::error::Error;
 use std::fmt::Write as _;
 use std::fs::File;
-use std::io::{BufRead, BufReader};
+use std::io::{BufRead, BufReader, BufWriter, Read, Write};
 use std::path::PathBuf;
 use std::sync::Mutex;
 use std::time::Instant;
 
 use all_pairs_hamming::sketch::Sketch;
+use byteorder::{ReadBytesExt, WriteBytesExt};
 use clap::Parser;
 use find_simdoc::feature::{FeatureConfig, FeatureExtractor};
 use find_simdoc::lsh::minhash::MinHasher;
@@ -15,6 +17,7 @@ use rand::{RngCore, SeedableRng};
 use rayon::prelude::*;
 
 const MAX_CHUNKS: usize = 100;
+const TMP_FILENAME: &'static str = "tmp.jac_dist";
 
 #[derive(Parser, Debug)]
 #[clap(
@@ -125,31 +128,32 @@ fn main() -> Result<(), Box<dyn Error>> {
         sketches
     };
 
-    let jac_dists = {
+    let possible_pairs = {
         let possible_pairs = features.len() * (features.len() - 1) / 2;
         eprintln!("Computing exact Jaccard distances for {possible_pairs} pairs...");
         let start = Instant::now();
-        let mut jac_dists = Vec::with_capacity(possible_pairs);
-        for i in 0..features.len() {
-            if (i + 1) % 100 == 0 {
-                eprintln!("Processed {}/{}...", i + 1, features.len());
-            }
-            let x = &features[i];
-            for y in features.iter().skip(i + 1) {
-                jac_dists.push(find_simdoc::lsh::jaccard_distance(
-                    x.iter().clone(),
-                    y.iter().clone(),
-                ));
+        {
+            let mut writer = BufWriter::new(File::create(TMP_FILENAME)?);
+            for i in 0..features.len() {
+                if (i + 1) % 100 == 0 {
+                    eprintln!("Processed {}/{}...", i + 1, features.len());
+                }
+                let x = &features[i];
+                for (j, y) in features.iter().enumerate().skip(i + 1) {
+                    let dist =
+                        find_simdoc::lsh::jaccard_distance(x.iter().clone(), y.iter().clone());
+                    let jac_dist = JacDist {
+                        i: i.try_into().unwrap(),
+                        j: j.try_into().unwrap(),
+                        dist,
+                    };
+                    jac_dist.encode(&mut writer);
+                }
             }
         }
         let duration = start.elapsed();
-        let total_bytes = jac_dists.len() * std::mem::size_of::<f64>();
-        eprintln!(
-            "Computed in {} sec, consuming {} MiB",
-            duration.as_secs_f64(),
-            total_bytes as f64 / (1024. * 1024.)
-        );
-        jac_dists
+        eprintln!("Computed in {} sec", duration.as_secs_f64());
+        possible_pairs
     };
 
     let radii = vec![0.1, 0.2, 0.5];
@@ -171,13 +175,19 @@ fn main() -> Result<(), Box<dyn Error>> {
         let mut true_results: Vec<_> = (0..radii.len()).map(|_| HashSet::new()).collect();
         let mut appx_results: Vec<_> = (0..radii.len()).map(|_| HashSet::new()).collect();
 
-        let mut jac_dist_iter = jac_dists.iter();
+        let mut reader = BufReader::new(File::open(TMP_FILENAME)?);
+
         for i in 0..sketches.len() {
             let x = &sketches[i];
             for (j, y) in sketches.iter().enumerate().skip(i + 1) {
-                let jac_dist = *jac_dist_iter.next().unwrap();
+                let jac_dist = JacDist::decode(&mut reader).unwrap();
+                assert_eq!(jac_dist.i, i.try_into().unwrap());
+                assert_eq!(jac_dist.j, j.try_into().unwrap());
+
+                let jac_dist = jac_dist.dist;
                 let ham_dist = hamming_distance(&x[..num_chunks], &y[..num_chunks]);
                 sum_error += (jac_dist - ham_dist).abs();
+
                 for (k, &r) in radii.iter().enumerate() {
                     if jac_dist <= r {
                         true_results[k].insert((i, j));
@@ -188,10 +198,9 @@ fn main() -> Result<(), Box<dyn Error>> {
                 }
             }
         }
-        assert_eq!(jac_dist_iter.next(), None);
 
         let dim = num_chunks * 64;
-        let mae = sum_error / jac_dists.len() as f64;
+        let mae = sum_error / possible_pairs as f64;
 
         let mut prf = vec![];
         for (tr, ar) in true_results.iter().zip(appx_results.iter()) {
@@ -224,4 +233,28 @@ fn hamming_distance(xs: &[u64], ys: &[u64]) -> f64 {
     // In 1-bit minhash, the collision probability is multiplied by 2 over the original.
     // Thus, we should modify the Hamming distance with a factor of 2.
     dist as f64 / (xs.len() * 64) as f64 * 2.
+}
+
+#[derive(Debug, PartialEq, PartialOrd)]
+struct JacDist {
+    i: u32,
+    j: u32,
+    dist: f64,
+}
+
+impl JacDist {
+    fn encode<W: Write>(&self, write: &mut W) {
+        write.write_u32::<byteorder::LittleEndian>(self.i).unwrap();
+        write.write_u32::<byteorder::LittleEndian>(self.j).unwrap();
+        write
+            .write_f64::<byteorder::LittleEndian>(self.dist)
+            .unwrap();
+    }
+
+    fn decode<R: Read>(read: &mut R) -> Option<Self> {
+        let i = read.read_u32::<byteorder::LittleEndian>().unwrap();
+        let j = read.read_u32::<byteorder::LittleEndian>().unwrap();
+        let dist = read.read_f64::<byteorder::LittleEndian>().unwrap();
+        Some(Self { i, j, dist })
+    }
 }
