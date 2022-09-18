@@ -1,9 +1,11 @@
-//! An exhaustive approach of all-pair similarity search on binary sketches.
+//! A naive implementation of similarity self-join on binary sketches in the Hamming space.
 use anyhow::{anyhow, Result};
 
 use crate::sketch::Sketch;
 
-/// An exhaustive approach of all-pair similarity search on binary sketches.
+/// A naive implementation of similarity self-join on binary sketches in the Hamming space,
+/// taking a quadratic time.
+/// Do NOT use this for large datasets.
 pub struct SimpleJoiner<S> {
     sketches: Vec<Vec<S>>,
     num_chunks: usize,

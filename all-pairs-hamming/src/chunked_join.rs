@@ -1,4 +1,4 @@
-//! A modified implementation of the sketch sorting with the multi-index approach.
+//! A fast and compact implementation of similarity self-join on binary sketches in the Hamming space.
 use anyhow::{anyhow, Result};
 
 use hashbrown::HashSet;
@@ -6,7 +6,12 @@ use hashbrown::HashSet;
 use crate::multi_sort::MultiSort;
 use crate::sketch::Sketch;
 
-/// A modified implementation of the sketch sorting with the multi-index approach.
+/// A fast and compact implementation of similarity self-join on binary sketches in the Hamming space.
+/// The algorithm employs a modified variant of the sketch sorting with the multi-index approach.
+///
+/// # Complexities
+///
+/// The time and memory complexities are linear in the input and output size.
 ///
 /// # Examples
 ///

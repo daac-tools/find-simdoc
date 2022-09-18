@@ -1,4 +1,4 @@
-//! Implementation of the multiple sorting algorithm on binary sketches.
+//! The core part of [`crate::ChunkedJoiner`].
 use std::cell::RefCell;
 use std::ops::Range;
 
@@ -17,7 +17,8 @@ struct Record<S> {
     sketch: S,
 }
 
-/// Implementation of the multiple sorting algorithm on binary sketches.
+/// The core part of [`crate::ChunkedJoiner`]
+/// implementing the multiple sorting algorithm for short binary sketches.
 ///
 /// # Complexities
 ///
