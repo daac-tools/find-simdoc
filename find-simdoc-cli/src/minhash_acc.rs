@@ -1,3 +1,5 @@
+#![allow(clippy::mutex_atomic)]
+
 use std::convert::TryInto;
 use std::env;
 use std::error::Error;
@@ -97,14 +99,12 @@ fn main() -> Result<(), Box<dyn Error>> {
         let start = Instant::now();
         let hasher = MinHasher::new(seeder.next_u64());
 
-        #[allow(clippy::mutex_atomic)]
         let processed = Mutex::new(0usize);
 
         let mut sketches = vec![vec![]; features.len()];
         features
             .par_iter()
             .map(|feature| {
-                #[allow(clippy::mutex_atomic)]
                 {
                     // Mutex::lock also locks eprintln.
                     let mut cnt = processed.lock().unwrap();
@@ -138,7 +138,6 @@ fn main() -> Result<(), Box<dyn Error>> {
         eprintln!("Computing exact Jaccard distances for {possible_pairs} pairs...");
         let start = Instant::now();
 
-        #[allow(clippy::mutex_atomic)]
         {
             let processed = Mutex::new(0usize);
             let writer = Mutex::new(BufWriter::new(File::create(&tmp_path)?));
@@ -173,7 +172,13 @@ fn main() -> Result<(), Box<dyn Error>> {
                 }
             });
         }
+        eprintln!(
+            "Wrote a file of {} GiB",
+            (possible_pairs as f64 * std::mem::size_of::<JacDist>() as f64)
+                / (1024. * 1024. * 1024.)
+        );
 
+        // TODO: Remove external sort by directly write
         eprintln!("External sorting...");
         {
             let mut reader = BufReader::new(File::open(&tmp_path)?);
@@ -191,7 +196,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         possible_pairs
     };
 
-    let radii = vec![0.1, 0.2, 0.5];
+    let radii = vec![0.01, 0.02, 0.05, 0.1, 0.2, 0.5];
     let mut header = "num_chunks,dimensions,mean_absolute_error".to_string();
     for &r in &radii {
         write!(header, ",precision_{r}")?;
@@ -203,7 +208,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     eprintln!("Computing accuracy...");
     let start = Instant::now();
 
-    #[allow(clippy::mutex_atomic)]
     let results = {
         let processed = Mutex::new(0usize);
         let mut results: Vec<_> = (1..=MAX_CHUNKS)
@@ -300,6 +304,7 @@ struct JacDist {
 
 impl Eq for JacDist {}
 
+#[allow(clippy::derive_ord_xor_partial_ord)]
 impl Ord for JacDist {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         self.partial_cmp(other).unwrap()

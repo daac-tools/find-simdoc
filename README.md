@@ -190,9 +190,9 @@ the national planning department forecast that in 1987 coffee , colombia ' s tra
 LSH is an approximate solution, and you may want to know the accuracy.
 The executable `minhash_acc` allows you to examine
 - the mean absolute error that is the averaged gap between the normalized Hamming distance and the actual Jaccard distance,
-- the precisions for search radii {0.1, 0.2, 0.5},
-- the recalls for search radii {0.1, 0.2, 0.5}, and
-- the F1-scores for search radii {0.1, 0.2, 0.5}.
+- the precisions for search radii {0.01, 0.02, 0.05, 0.1, 0.2, 0.5},
+- the recalls for search radii {0.01, 0.02, 0.05, 0.1, 0.2, 0.5}, and
+- the F1-scores for search radii {0.01, 0.02, 0.05, 0.1, 0.2, 0.5}.
 
 To use this executable, we recommend extracting a small subset from your dataset
 because it exactly computes distances for all possible pairs and maintains a large amount of data in main memory.
@@ -208,23 +208,6 @@ The arguments for feature extraction are the same as those of `jaccard`.
 
 ```
 $ cargo run --release -p find-simdoc-cli --bin minhash_acc -- -i reuters.5k.txt -w 5 > acc.csv
-```
-
-The statistics will be reported as follows.
-It can be seen that the accuracy improves as the number of dimensions increases.
-
-```
-$ cat acc.csv
-num_chunks,dimensions,mean_absolute_error,precision_0.1,recall_0.1,f1_0.1,precision_0.2,recall_0.2,f1_0.2,precision_0.5,recall_0.5,f1_0.5
-1,64,0.09996782775866102,0.5,1,0.6666666666666666,0.8,0.5714285714285714,0.6666666666666666,0.02139917695473251,0.7647058823529411,0.04163330664531626
-2,128,0.07069611162104494,1,1,1,0.8333333333333334,0.7142857142857143,0.7692307692307692,0.47368421052631576,0.7941176470588235,0.5934065934065933
-3,192,0.05776715360376704,1,1,1,0.8333333333333334,0.7142857142857143,0.7692307692307692,0.6304347826086957,0.8529411764705882,0.725
-4,256,0.049919892543492474,1,1,1,1,0.7142857142857143,0.8333333333333333,0.8181818181818182,0.7941176470588235,0.8059701492537314
-...
-97,6208,0.0101065034709229,1,1,1,1,1,1,1,0.9705882352941176,0.9850746268656716
-98,6272,0.010056169962171922,1,1,1,1,1,1,1,0.9705882352941176,0.9850746268656716
-99,6336,0.01000512597491915,1,1,1,1,1,1,1,0.9705882352941176,0.9850746268656716
-100,6400,0.00995601577231552,1,1,1,1,1,1,1,0.9705882352941176,0.9850746268656716
 ```
 
 ## Approximation accuracy of 1-bit minwise hashing
