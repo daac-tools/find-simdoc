@@ -167,6 +167,8 @@ fn main() -> Result<(), Box<dyn Error>> {
                         jac_dist.encode(w.deref_mut());
                     }
                 }
+
+                // TODO: External sort
             });
         }
         let duration = start.elapsed();
