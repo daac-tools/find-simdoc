@@ -3,6 +3,7 @@ use std::fmt::Write as _;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
+use std::sync::Mutex;
 use std::time::Instant;
 
 use all_pairs_hamming::sketch::Sketch;
@@ -11,6 +12,7 @@ use find_simdoc::feature::{FeatureConfig, FeatureExtractor};
 use find_simdoc::lsh::minhash::MinHasher;
 use hashbrown::HashSet;
 use rand::{RngCore, SeedableRng};
+use rayon::prelude::*;
 
 const MAX_CHUNKS: usize = 100;
 
@@ -89,16 +91,30 @@ fn main() -> Result<(), Box<dyn Error>> {
         eprintln!("Producing binary sketches...");
         let start = Instant::now();
         let hasher = MinHasher::new(seeder.next_u64());
-        let mut sketches = Vec::with_capacity(features.len());
-        for (i, feature) in features.iter().enumerate() {
-            if (i + 1) % 100 == 0 {
-                eprintln!("Processed {}/{}...", i + 1, features.len());
-            }
-            let mut iter = hasher.iter(feature);
-            let mut sketch = Vec::with_capacity(MAX_CHUNKS);
-            (0..MAX_CHUNKS).for_each(|_| sketch.push(iter.next().unwrap()));
-            sketches.push(sketch);
-        }
+
+        #[allow(clippy::mutex_atomic)]
+        let processed = Mutex::new(0usize);
+
+        let mut sketches = vec![vec![]; features.len()];
+        features
+            .par_iter()
+            .map(|feature| {
+                #[allow(clippy::mutex_atomic)]
+                {
+                    // Mutex::lock also locks eprintln.
+                    let mut cnt = processed.lock().unwrap();
+                    *cnt += 1;
+                    if *cnt % 1000 == 0 {
+                        eprintln!("Processed {} features...", *cnt);
+                    }
+                }
+                let mut iter = hasher.iter(feature);
+                let mut sketch = Vec::with_capacity(MAX_CHUNKS);
+                (0..MAX_CHUNKS).for_each(|_| sketch.push(iter.next().unwrap()));
+                sketch
+            })
+            .collect_into_vec(&mut sketches);
+
         let duration = start.elapsed();
         let total_bytes = sketches.len() * MAX_CHUNKS * std::mem::size_of::<u64>();
         eprintln!(
