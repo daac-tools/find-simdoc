@@ -1,4 +1,5 @@
 use std::convert::TryInto;
+use std::env;
 use std::error::Error;
 use std::fmt::Write as _;
 use std::fs::File;
@@ -11,6 +12,7 @@ use std::time::Instant;
 use all_pairs_hamming::sketch::Sketch;
 use byteorder::{ReadBytesExt, WriteBytesExt};
 use clap::Parser;
+use extsort::{ExternalSorter, Sortable};
 use find_simdoc::feature::{FeatureConfig, FeatureExtractor};
 use find_simdoc::lsh::minhash::MinHasher;
 use hashbrown::HashSet;
@@ -18,7 +20,6 @@ use rand::{RngCore, SeedableRng};
 use rayon::prelude::*;
 
 const MAX_CHUNKS: usize = 100;
-const TMP_FILENAME: &'static str = "tmp.jac_dist";
 
 #[derive(Parser, Debug)]
 #[clap(
@@ -129,6 +130,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         sketches
     };
 
+    let tmp_path = make_tmp_path();
+    let tmp_sorted_path = make_tmp_sorted_path();
+
     let possible_pairs = {
         let possible_pairs = features.len() * (features.len() - 1) / 2;
         eprintln!("Computing exact Jaccard distances for {possible_pairs} pairs...");
@@ -137,14 +141,14 @@ fn main() -> Result<(), Box<dyn Error>> {
         #[allow(clippy::mutex_atomic)]
         {
             let processed = Mutex::new(0usize);
-            let writer = Mutex::new(BufWriter::new(File::create(TMP_FILENAME)?));
+            let writer = Mutex::new(BufWriter::new(File::create(&tmp_path)?));
 
             (0..features.len()).into_par_iter().for_each(|i| {
                 {
                     // Mutex::lock also locks eprintln.
                     let mut cnt = processed.lock().unwrap();
                     *cnt += 1;
-                    if *cnt % 100 == 0 {
+                    if *cnt % 1000 == 0 {
                         eprintln!("Processed {} features...", *cnt);
                     }
                 }
@@ -167,10 +171,21 @@ fn main() -> Result<(), Box<dyn Error>> {
                         jac_dist.encode(w.deref_mut());
                     }
                 }
-
-                // TODO: External sort
             });
         }
+
+        eprintln!("External sorting...");
+        {
+            let mut reader = BufReader::new(File::open(&tmp_path)?);
+            let mut writer = BufWriter::new(File::create(&tmp_sorted_path)?);
+            let sorter = ExternalSorter::new()
+                .with_sort_dir(env::temp_dir())
+                .with_parallel_sort();
+            let reader_iter = (0..possible_pairs).map(|_| JacDist::decode(&mut reader).unwrap());
+            let sorted_iter = sorter.sort(reader_iter).unwrap();
+            sorted_iter.for_each(|jac_dist| jac_dist.encode(&mut writer));
+        }
+
         let duration = start.elapsed();
         eprintln!("Computed in {} sec", duration.as_secs_f64());
         possible_pairs
@@ -195,7 +210,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         let mut true_results: Vec<_> = (0..radii.len()).map(|_| HashSet::new()).collect();
         let mut appx_results: Vec<_> = (0..radii.len()).map(|_| HashSet::new()).collect();
 
-        let mut reader = BufReader::new(File::open(TMP_FILENAME)?);
+        let mut reader = BufReader::new(File::open(&tmp_sorted_path)?);
 
         for i in 0..sketches.len() {
             let x = &sketches[i];
@@ -262,7 +277,15 @@ struct JacDist {
     dist: f64,
 }
 
-impl JacDist {
+impl Eq for JacDist {}
+
+impl Ord for JacDist {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.partial_cmp(other).unwrap()
+    }
+}
+
+impl Sortable for JacDist {
     fn encode<W: Write>(&self, write: &mut W) {
         write.write_u32::<byteorder::LittleEndian>(self.i).unwrap();
         write.write_u32::<byteorder::LittleEndian>(self.j).unwrap();
@@ -272,9 +295,21 @@ impl JacDist {
     }
 
     fn decode<R: Read>(read: &mut R) -> Option<Self> {
-        let i = read.read_u32::<byteorder::LittleEndian>().unwrap();
-        let j = read.read_u32::<byteorder::LittleEndian>().unwrap();
-        let dist = read.read_f64::<byteorder::LittleEndian>().unwrap();
+        let i = read.read_u32::<byteorder::LittleEndian>().ok()?;
+        let j = read.read_u32::<byteorder::LittleEndian>().ok()?;
+        let dist = read.read_f64::<byteorder::LittleEndian>().ok()?;
         Some(Self { i, j, dist })
     }
+}
+
+fn make_tmp_path() -> PathBuf {
+    let mut tmp_path = env::temp_dir();
+    tmp_path.push("tmp.jac_dist");
+    tmp_path
+}
+
+fn make_tmp_sorted_path() -> PathBuf {
+    let mut tmp_path = env::temp_dir();
+    tmp_path.push("tmp.sorted.jac_dist");
+    tmp_path
 }
