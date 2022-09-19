@@ -21,12 +21,6 @@ use rayon::prelude::*;
 
 const MAX_CHUNKS: usize = 100;
 
-fn make_tmp_path() -> PathBuf {
-    let mut tmp_path = env::temp_dir();
-    tmp_path.push("tmp.jac_dist");
-    tmp_path
-}
-
 #[derive(Parser, Debug)]
 #[clap(
     name = "find-simdoc-minhash_acc",
@@ -50,6 +44,10 @@ struct Args {
     /// Seed value for random values.
     #[clap(short = 's', long)]
     seed: Option<u64>,
+
+    /// Directory path to write a tmp file.
+    #[clap(short = 't', long)]
+    tmp_dir: Option<PathBuf>,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -59,6 +57,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let delimiter = args.delimiter;
     let window_size = args.window_size;
     let seed = args.seed;
+    let tmp_dir = args.tmp_dir;
 
     if window_size == 0 {
         return Err("window_size must not be 0.".into());
@@ -134,7 +133,11 @@ fn main() -> Result<(), Box<dyn Error>> {
         sketches
     };
 
-    let tmp_path = make_tmp_path();
+    let tmp_path = {
+        let mut tmp_path = tmp_dir.unwrap_or(env::temp_dir());
+        tmp_path.push("tmp.jac_dist");
+        tmp_path
+    };
 
     let possible_pairs = {
         let start = Instant::now();
@@ -165,8 +168,9 @@ fn main() -> Result<(), Box<dyn Error>> {
             }
 
             eprintln!(
-                "Created a tmp file of {} GiB",
-                tmp_file_size as f64 / (1024. * 1024. * 1024.)
+                "Created a tmp file of {} GiB, at {:?}",
+                tmp_file_size as f64 / (1024. * 1024. * 1024.),
+                &tmp_path
             );
 
             (0..features.len()).into_par_iter().for_each(|i| {
