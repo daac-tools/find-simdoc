@@ -1,27 +1,31 @@
 #![allow(clippy::mutex_atomic)]
 
-use std::convert::TryInto;
 use std::env;
 use std::error::Error;
 use std::fmt::Write as _;
 use std::fs::File;
-use std::io::{BufRead, BufReader, BufWriter, Read, Write};
-use std::ops::DerefMut;
+use std::io::{BufRead, BufReader, Read};
+use std::mem;
 use std::path::PathBuf;
 use std::sync::Mutex;
 use std::time::Instant;
 
 use all_pairs_hamming::sketch::Sketch;
-use byteorder::{ReadBytesExt, WriteBytesExt};
 use clap::Parser;
-use extsort::{ExternalSorter, Sortable};
 use find_simdoc::feature::{FeatureConfig, FeatureExtractor};
 use find_simdoc::lsh::minhash::MinHasher;
 use hashbrown::HashSet;
+use positioned_io::WriteAt;
 use rand::{RngCore, SeedableRng};
 use rayon::prelude::*;
 
 const MAX_CHUNKS: usize = 100;
+
+fn make_tmp_path() -> PathBuf {
+    let mut tmp_path = env::temp_dir();
+    tmp_path.push("tmp.jac_dist");
+    tmp_path
+}
 
 #[derive(Parser, Debug)]
 #[clap(
@@ -131,16 +135,39 @@ fn main() -> Result<(), Box<dyn Error>> {
     };
 
     let tmp_path = make_tmp_path();
-    let tmp_sorted_path = make_tmp_sorted_path();
 
     let possible_pairs = {
+        let start = Instant::now();
+
         let possible_pairs = features.len() * (features.len() - 1) / 2;
         eprintln!("Computing exact Jaccard distances for {possible_pairs} pairs...");
-        let start = Instant::now();
+
+        let tmp_file_size = possible_pairs * mem::size_of::<f64>();
+        let offsets = {
+            let mut offset = 0;
+            let mut offsets = Vec::with_capacity(features.len());
+            for i in 0..features.len() {
+                offsets.push(offset);
+                offset += features.len() - i - 1;
+            }
+            assert_eq!(offset, possible_pairs);
+            offsets
+        };
 
         {
             let processed = Mutex::new(0usize);
-            let writer = Mutex::new(BufWriter::new(File::create(&tmp_path)?));
+            let writer = Mutex::new(File::create(&tmp_path)?);
+
+            // Creates a file object of size tmp_file_size bytes.
+            {
+                let mut w = writer.lock().unwrap();
+                w.write_at(tmp_file_size as u64 - 1, &[0])?;
+            }
+
+            eprintln!(
+                "Created a tmp file of {} GiB",
+                tmp_file_size as f64 / (1024. * 1024. * 1024.)
+            );
 
             (0..features.len()).into_par_iter().for_each(|i| {
                 {
@@ -151,44 +178,24 @@ fn main() -> Result<(), Box<dyn Error>> {
                         eprintln!("Processed {} features...", *cnt);
                     }
                 }
-                let mut jac_dists = Vec::with_capacity(features.len() - i);
+
+                let mut jac_dists =
+                    Vec::with_capacity((features.len() - i) * mem::size_of::<f64>());
 
                 let x = &features[i];
-                for (j, y) in features.iter().enumerate().skip(i + 1) {
+                for y in features.iter().skip(i + 1) {
                     let dist =
                         find_simdoc::lsh::jaccard_distance(x.iter().clone(), y.iter().clone());
-                    let jac_dist = JacDist {
-                        i: i.try_into().unwrap(),
-                        j: j.try_into().unwrap(),
-                        dist,
-                    };
-                    jac_dists.push(jac_dist);
+                    jac_dists.extend_from_slice(&dist.to_le_bytes());
                 }
+
+                // Writes distances with random access on a file stream.
+                let offset = offsets[i] * mem::size_of::<f64>();
                 {
                     let mut w = writer.lock().unwrap();
-                    for jac_dist in jac_dists {
-                        jac_dist.encode(w.deref_mut());
-                    }
+                    w.write_at(offset as u64, &jac_dists).unwrap();
                 }
             });
-        }
-        eprintln!(
-            "Wrote a file of {} GiB",
-            (possible_pairs as f64 * std::mem::size_of::<JacDist>() as f64)
-                / (1024. * 1024. * 1024.)
-        );
-
-        // TODO: Remove external sort by directly write
-        eprintln!("External sorting...");
-        {
-            let mut reader = BufReader::new(File::open(&tmp_path)?);
-            let mut writer = BufWriter::new(File::create(&tmp_sorted_path)?);
-            let sorter = ExternalSorter::new()
-                .with_sort_dir(env::temp_dir())
-                .with_parallel_sort();
-            let reader_iter = (0..possible_pairs).map(|_| JacDist::decode(&mut reader).unwrap());
-            let sorted_iter = sorter.sort(reader_iter).unwrap();
-            sorted_iter.for_each(|jac_dist| jac_dist.encode(&mut writer));
         }
 
         let duration = start.elapsed();
@@ -226,16 +233,15 @@ fn main() -> Result<(), Box<dyn Error>> {
                 let mut true_results: Vec<_> = (0..radii.len()).map(|_| HashSet::new()).collect();
                 let mut appx_results: Vec<_> = (0..radii.len()).map(|_| HashSet::new()).collect();
 
-                let mut reader = BufReader::new(File::open(&tmp_sorted_path).unwrap());
+                let mut reader = BufReader::new(File::open(&tmp_path).unwrap());
 
                 for i in 0..sketches.len() {
                     let x = &sketches[i];
                     for (j, y) in sketches.iter().enumerate().skip(i + 1) {
-                        let jac_dist = JacDist::decode(&mut reader).unwrap();
-                        assert_eq!(jac_dist.i, i.try_into().unwrap());
-                        assert_eq!(jac_dist.j, j.try_into().unwrap());
+                        let mut buf = [0; mem::size_of::<f64>()];
+                        reader.read_exact(&mut buf).unwrap();
 
-                        let jac_dist = jac_dist.dist;
+                        let jac_dist = f64::from_le_bytes(buf);
                         let ham_dist = hamming_distance(&x[..num_chunks], &y[..num_chunks]);
                         sum_error += (jac_dist - ham_dist).abs();
 
@@ -293,49 +299,4 @@ fn hamming_distance(xs: &[u64], ys: &[u64]) -> f64 {
     // In 1-bit minhash, the collision probability is multiplied by 2 over the original.
     // Thus, we should modify the Hamming distance with a factor of 2.
     dist as f64 / (xs.len() * 64) as f64 * 2.
-}
-
-#[derive(Debug, PartialEq, PartialOrd)]
-struct JacDist {
-    i: u32,
-    j: u32,
-    dist: f64,
-}
-
-impl Eq for JacDist {}
-
-#[allow(clippy::derive_ord_xor_partial_ord)]
-impl Ord for JacDist {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.partial_cmp(other).unwrap()
-    }
-}
-
-impl Sortable for JacDist {
-    fn encode<W: Write>(&self, write: &mut W) {
-        write.write_u32::<byteorder::LittleEndian>(self.i).unwrap();
-        write.write_u32::<byteorder::LittleEndian>(self.j).unwrap();
-        write
-            .write_f64::<byteorder::LittleEndian>(self.dist)
-            .unwrap();
-    }
-
-    fn decode<R: Read>(read: &mut R) -> Option<Self> {
-        let i = read.read_u32::<byteorder::LittleEndian>().ok()?;
-        let j = read.read_u32::<byteorder::LittleEndian>().ok()?;
-        let dist = read.read_f64::<byteorder::LittleEndian>().ok()?;
-        Some(Self { i, j, dist })
-    }
-}
-
-fn make_tmp_path() -> PathBuf {
-    let mut tmp_path = env::temp_dir();
-    tmp_path.push("tmp.jac_dist");
-    tmp_path
-}
-
-fn make_tmp_sorted_path() -> PathBuf {
-    let mut tmp_path = env::temp_dir();
-    tmp_path.push("tmp.sorted.jac_dist");
-    tmp_path
 }
