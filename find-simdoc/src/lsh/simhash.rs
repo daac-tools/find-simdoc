@@ -1,3 +1,4 @@
+//! Simplified simhash for the Cosine similarity.
 use rand_xoshiro::rand_core::{RngCore, SeedableRng};
 
 /// [Simplified simhash](https://dl.acm.org/doi/10.1145/2063576.2063737) for Cosine similarity.
@@ -6,10 +7,12 @@ pub struct SimHasher {
 }
 
 impl SimHasher {
+    /// Creates an instance.
     pub const fn new(seed: u64) -> Self {
         Self { seed }
     }
 
+    /// Creates an iterator to generate sketches from an input feature.
     pub fn iter<'a>(&self, feature: &'a [(u64, f64)]) -> SimHashIter<'a> {
         SimHashIter {
             feature,
@@ -19,6 +22,7 @@ impl SimHasher {
     }
 }
 
+/// Iterator to generate sketches with the simplified simhash.
 pub struct SimHashIter<'a> {
     feature: &'a [(u64, f64)],
     seeder: rand_xoshiro::SplitMix64,
@@ -34,7 +38,7 @@ impl<'a> Iterator for SimHashIter<'a> {
         for (h, x) in self
             .feature
             .iter()
-            .map(|&(i, x)| (crate::hash_u64(i, seed), x))
+            .map(|&(i, x)| (crate::lsh::hash_u64(i, seed), x))
         {
             for (j, w) in self.weights.iter_mut().enumerate() {
                 if (h >> j) & 1 == 0 {

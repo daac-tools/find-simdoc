@@ -3,10 +3,10 @@ use std::sync::Mutex;
 
 use crate::errors::{FindSimdocError, Result};
 use crate::feature::{FeatureConfig, FeatureExtractor};
+use crate::lsh::simhash::SimHasher;
 use crate::tfidf::{Idf, Tf};
 
 use all_pairs_hamming::chunked_join::ChunkedJoiner;
-use lsh::simhash::SimHasher;
 use rand::{RngCore, SeedableRng};
 use rayon::prelude::*;
 

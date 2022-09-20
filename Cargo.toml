@@ -1,6 +1,5 @@
 [workspace]
 members = [
-    "lsh",
     "all-pairs-hamming",
     "all-pairs-hamming/timeperf",
     "find-simdoc",
