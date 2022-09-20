@@ -276,5 +276,4 @@ dual licensed as above, without any additional terms or conditions.
 
 ## TODO
 
-- Print progress in parallel construction.
 - Publish APIs in crate.io.
