@@ -134,7 +134,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     };
 
     let tmp_path = {
-        let mut tmp_path = tmp_dir.unwrap_or(env::temp_dir());
+        let mut tmp_path = tmp_dir.unwrap_or_else(env::temp_dir);
         tmp_path.push("tmp.jac_dist");
         tmp_path
     };
