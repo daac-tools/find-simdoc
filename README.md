@@ -22,8 +22,8 @@ Therefore, you can immediately try the fast all-pair similarity search using you
 This can be useful in languages where multiple definitions of words exist, such as Japanese or Chinese.
 - **Time efficiency:** The time complexity is *linear* over the numbers of input documents and output results,
 based on the idea of the [sketch sorting approach](https://proceedings.mlr.press/v13/tabei10a.html).
-- **Memory efficiency:** The memory complexity is *linear* over the numbers of input documents,
-and the actual memory usage is also very low thanks to compact binary sketches by locality sensitive hashing.
+- **Memory efficiency:** The memory complexity is *linear* over the numbers of input documents and output results,
+and the actual memory usage can be very low thanks to compact binary sketches by locality sensitive hashing.
 - **Pure Rust:** This software is implemented in Rust, achieving safe and fast performance.
 
 ## Running example
@@ -259,5 +259,4 @@ dual licensed as above, without any additional terms or conditions.
 
 ## TODO
 
-- Print progress in parallel construction.
 - Publish APIs in crate.io.

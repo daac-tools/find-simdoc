@@ -1,3 +1,4 @@
+//! A fast and compact implementation of similarity self-join on binary sketches in the Hamming space.
 use anyhow::{anyhow, Result};
 
 use hashbrown::HashSet;
@@ -5,6 +6,35 @@ use hashbrown::HashSet;
 use crate::multi_sort::MultiSort;
 use crate::sketch::Sketch;
 
+/// A fast and compact implementation of similarity self-join on binary sketches in the Hamming space.
+/// The algorithm employs a modified variant of the sketch sorting with the multi-index approach.
+///
+/// # Complexities
+///
+/// The time and memory complexities are linear in the input and output size.
+///
+/// # Examples
+///
+/// ```
+/// use all_pairs_hamming::ChunkedJoiner;
+///
+/// let mut joiner = ChunkedJoiner::<u8>::new(2);
+/// joiner.add([0b1111, 0b1001]);
+/// joiner.add([0b1101, 0b1001]);
+/// joiner.add([0b0101, 0b0001]);
+///
+/// let mut results = joiner.similar_pairs(0.15);
+/// assert_eq!(results, vec![(0, 1, 0.0625), (1, 2, 0.125)]);
+/// ```
+///
+/// # References
+///
+/// - Tabei, Uno, Sugiyama, and Tsuda.
+///   [Single versus Multiple Sorting in All Pairs Similarity Search](https://proceedings.mlr.press/v13/tabei10a.html).
+///   ACML, 2010
+/// - J. Qin et al.
+///   [Generalizing the Pigeonhole Principle for Similarity Search in Hamming Space](https://doi.org/10.1109/TKDE.2019.2899597).
+///   IEEE Transactions on Knowledge and Data Engineering, 2021
 pub struct ChunkedJoiner<S> {
     chunks: Vec<Vec<S>>,
     shows_progress: bool,
@@ -14,6 +44,8 @@ impl<S> ChunkedJoiner<S>
 where
     S: Sketch,
 {
+    /// Creates an instance, handling sketches of `num_chunks` chunks, i.e.,
+    /// in `S::dim() * num_chunks` dimensions.
     pub fn new(num_chunks: usize) -> Self {
         Self {
             chunks: vec![vec![]; num_chunks],
@@ -21,11 +53,15 @@ where
         }
     }
 
+    /// Prints the progress with stderr?
     pub const fn shows_progress(mut self, yes: bool) -> Self {
         self.shows_progress = yes;
         self
     }
 
+    /// Appends a sketch of [`Self::num_chunks()`] chunks.
+    /// The first [`Self::num_chunks()`] elements of an input iterator is stored.
+    /// If the iterator is consumed until obtaining the elements, an error is returned.
     pub fn add<I>(&mut self, sketch: I) -> Result<()>
     where
         I: IntoIterator<Item = S>,
@@ -40,6 +76,8 @@ where
         Ok(())
     }
 
+    /// Finds all similar pairs whose normalized Hamming distance is within `radius`,
+    /// returning triplets of the left-side id, the right-side id, and thier distance.
     pub fn similar_pairs(&self, radius: f64) -> Vec<(usize, usize, f64)> {
         let dimension = S::dim() * self.num_chunks();
         let hamradius = (dimension as f64 * radius).ceil() as usize;
@@ -96,14 +134,17 @@ where
         matched
     }
 
+    /// Gets the number of chunks.
     pub fn num_chunks(&self) -> usize {
         self.chunks.len()
     }
 
+    /// Gets the number of stored sketches.
     pub fn num_sketches(&self) -> usize {
         self.chunks.get(0).map(|v| v.len()).unwrap_or(0)
     }
 
+    /// Gets the memory usage in bytes.
     pub fn memory_in_bytes(&self) -> usize {
         self.num_chunks() * self.num_sketches() * std::mem::size_of::<S>()
     }

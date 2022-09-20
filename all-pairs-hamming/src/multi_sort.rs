@@ -1,3 +1,4 @@
+//! The core part of [`crate::ChunkedJoiner`].
 use std::cell::RefCell;
 use std::ops::Range;
 
@@ -16,7 +17,18 @@ struct Record<S> {
     sketch: S,
 }
 
-/// [Multi-sorting algorithm for finding pairs of similar short substrings from large-scale string data](https://doi.org/10.1007/s10115-009-0271-6)
+/// The core part of [`crate::ChunkedJoiner`]
+/// implementing the multiple sorting algorithm for short binary sketches.
+///
+/// # Complexities
+///
+/// The time and memory complexities are linear in the input and output size.
+///
+/// # References
+///
+/// - Uno.
+///   [Multi-sorting algorithm for finding pairs of similar short substrings from large-scale string data](https://doi.org/10.1007/s10115-009-0271-6).
+///   Knowl Inf Syst 25, 229–251 (2010).
 #[derive(Clone, Debug)]
 pub struct MultiSort<S> {
     radius: usize,
@@ -42,6 +54,7 @@ impl<S> MultiSort<S>
 where
     S: Sketch,
 {
+    /// Creates an instance.
     pub const fn new() -> Self {
         Self {
             radius: 0,
@@ -54,6 +67,7 @@ where
         }
     }
 
+    /// Sets the number of blocks.
     pub fn num_blocks(mut self, num_blocks: usize) -> Self {
         if num_blocks <= S::dim() {
             self.num_blocks = num_blocks;
@@ -61,12 +75,16 @@ where
         self
     }
 
+    /// Sets the size threshold for partial sorting.
+    /// If the partial size is smaller than the threshold, a quicksort is used;
+    /// otherwise, a radix sort is used.
     pub const fn threshold_in_sort(mut self, threshold_in_sort: usize) -> Self {
         self.threshold_in_sort = threshold_in_sort;
         self
     }
 
-    /// Reports all similar pairs whose Hamming distance is within `radius`.
+    /// Finds all similar pairs whose Hamming distance is within `radius`,
+    /// inserting the results in a given hash table.
     pub fn similar_pairs(
         mut self,
         sketches: &[S],
