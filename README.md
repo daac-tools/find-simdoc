@@ -189,13 +189,11 @@ the national planning department forecast that in 1987 coffee , colombia ' s tra
 
 LSH is an approximate solution, and you may want to know the accuracy.
 The executable `minhash_acc` allows you to examine
-- the mean absolute error that is the averaged gap between the normalized Hamming distance and the actual Jaccard distance,
-- the precisions for search radii {0.01, 0.02, 0.05, 0.1, 0.2, 0.5},
-- the recalls for search radii {0.01, 0.02, 0.05, 0.1, 0.2, 0.5}, and
-- the F1-scores for search radii {0.01, 0.02, 0.05, 0.1, 0.2, 0.5}.
+- the mean absolute error that is the averaged gap between the normalized Hamming distance and the actual Jaccard distance; and
+- the number of true results, precisions, recalls, and F1-scores for search radii {0.01, 0.02, 0.05, 0.1, 0.2, 0.5}.
 
 To use this executable, we recommend extracting a small subset from your dataset
-because it exactly computes distances for all possible pairs and maintains a large amount of data in main memory.
+because it exactly computes distances for all possible pairs (although the computation is accelerated with parallelization).
 
 ```
 $ head -5000 reuters.txt > reuters.5k.txt
@@ -212,28 +210,41 @@ $ cargo run --release -p find-simdoc-cli --bin minhash_acc -- -i reuters.5k.txt 
 
 ## Approximation accuracy of 1-bit minwise hashing
 
-LSH is an approximation solution, and the number of dimensions in the Hamming space
+LSH is an approximate solution, and the number of dimensions in the Hamming space
 (indicated with the command line argument `-c`) is related to the approximation accuracy.
-As a hint for choosing a parameter of `-c`, we show the experimental results obtained in the above running example with `minhash_acc`.
+As a hint for choosing a parameter of `-c`, we show experimental results obtained from `reuters.txt` of 51,535 documents when setting `-w 5`.
 
 ### Mean absolute error (MAE)
 
 The following figure shows MAEs while varying the number of Hamming dimensions from 64 to 6400 (i.e., the number of chunks from 1 to 100 indicated with `-c`).
 
-![](./figures/mae_reuters5k.svg)
+![](./figures/mae_reuters.svg)
 
 As expected, the larger the number, the higher the accuracy. For example, when the number of dimensions is 1024 (setting the argument `-c 16`), we achieve the MAE around 2.5%.
 
+### Recall
+
+Of the precision, recall, and F1 score, the most interesting would be the recall.
+This is because false positives can be filtered out in post processing.
+
+The following figure shows recalls in search with radii 0.05, 0.1, and 0.2 (indicated with the argument `-r`).
+
+![](./figures/recall_reuters.svg)
+
+For radii 0.1 and 0.2, over 90% recalls are achieved in most cases.
+For smaller radius 0.05, 75-90% recalls are obtained because the MAE becomes larger relative to the radius.
+
+By the way, the numbers of true results are 50, 201, and 626 for radii 0.05, 0.1, and 0.2, respecitvely.
+
 ### F1 score
 
-The following figure shows F1 scores in search with radii 0.1, 0.2, and 0.5 (indicated with the argument `-r`).
+The following figure shows F1 scores in search with radii 0.05, 0.1, and 0.2 (indicated with the argument `-r`).
 
-![](./figures/f1_reuters5k.svg)
+![](./figures/f1_reuters.svg)
 
-For a small radius `-r 0.1`, few dimensions are enough to obtain high F1 scores.
-Setting at least `-c 2` achieves the perfect F1 score.
-For larger radii, when the number of dimensions is 1024 (setting `-c 16`),
-we achieve the score around 90%.
+- For radius 0.05, over 90% scores are achieved from 3520 dimensions (setting `-c 55`). 
+- For radius 0.1, over 90% scores are achieved from 704 dimensions (setting `-c 11`).
+- For radius 0.2, over 90% scores are achieved from 448 dimensions (setting `-c 7`).
 
 ## Disclaimer
 
