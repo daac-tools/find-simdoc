@@ -210,6 +210,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let radii = vec![0.01, 0.02, 0.05, 0.1, 0.2, 0.5];
     let mut header = "num_chunks,dimensions,mean_absolute_error".to_string();
     for &r in &radii {
+        write!(header, ",results_{r}")?;
         write!(header, ",precision_{r}")?;
         write!(header, ",recall_{r}")?;
         write!(header, ",f1_{r}")?;
@@ -271,12 +272,12 @@ fn main() -> Result<(), Box<dyn Error>> {
                     let precision = true_positive / (true_positive + false_positive);
                     let recall = true_positive / (true_positive + false_negative);
                     let f1 = (2. * precision * recall) / (precision + recall);
-                    prf.push((precision, recall, f1));
+                    prf.push((tr.len(), precision, recall, f1));
                 }
 
                 let mut body = format!("{num_chunks},{dim},{mae}");
-                for (p, r, f) in prf {
-                    write!(body, ",{p},{r},{f}").unwrap();
+                for (t, p, r, f) in prf {
+                    write!(body, ",{t},{p},{r},{f}").unwrap();
                 }
                 (num_chunks, body)
             })
