@@ -14,7 +14,6 @@ use all_pairs_hamming::sketch::Sketch;
 use clap::Parser;
 use find_simdoc::feature::{FeatureConfig, FeatureExtractor};
 use find_simdoc::lsh::minhash::MinHasher;
-use find_simdoc::lsh::minhash::MinHasher;
 use hashbrown::HashSet;
 use positioned_io::WriteAt;
 use rand::{RngCore, SeedableRng};
