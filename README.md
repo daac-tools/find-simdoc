@@ -21,8 +21,8 @@ Therefore, you can immediately try the fast all-pair similarity search using you
 - **Flexible tokenization:** You can specify any delimiter when splitting words in tokenization for feature extraction.
 This can be useful in languages where multiple definitions of words exist, such as Japanese or Chinese.
 - **Time and memory efficiency:** The time and memory complexities are *linear* over the numbers of input documents and output results,
-based on the idea of the [sketch sorting approach](https://proceedings.mlr.press/v13/tabei10a.html).
-- **Flexible search performance:** Locality sensitive hashing (LSH) allows tuning of performance in accuracy, time, and memory, through a manual parameter of specifying search dimensions.
+based on the ideas of the locality sensitive hashing (LSH) and [sketch sorting approach](https://proceedings.mlr.press/v13/tabei10a.html).
+- **Flexible search performance:** LSH allows tuning of performance in accuracy, time, and memory, through a manual parameter of specifying search dimensions.
 Thus, you can flexibly perform searches depending on your dataset and machine environment.
   - Specifying lower dimensions allows for faster and rougher searches for similar documents with less memory usage.
   - Specifying higher dimensions allows for searches for similar documents with greater accuracy.
