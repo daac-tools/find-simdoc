@@ -1,8 +1,7 @@
 //! A fast and compact implementation of similarity self-join on binary sketches in the Hamming space.
-use anyhow::{anyhow, Result};
-
 use hashbrown::HashSet;
 
+use crate::errors::{AllPairsHammingError, Result};
 use crate::multi_sort::MultiSort;
 use crate::sketch::Sketch;
 
@@ -70,7 +69,8 @@ where
         let mut iter = sketch.into_iter();
         for chunk in self.chunks.iter_mut() {
             chunk.push(iter.next().ok_or_else(|| {
-                anyhow!("The input sketch must include {num_chunks} chunks at least.")
+                let msg = format!("The input sketch must include {num_chunks} chunks at least.");
+                AllPairsHammingError::input(msg)
             })?);
         }
         Ok(())

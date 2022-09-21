@@ -15,5 +15,4 @@ categories = ["text-processing", "algorithms"]
 
 [dependencies]
 num-traits = "0.2.15" # MIT or Apache-2.0
-anyhow = "=1.0.62" # MIT or Apache-2.0
 hashbrown = "0.12.3" # MIT or Apache-2.0
