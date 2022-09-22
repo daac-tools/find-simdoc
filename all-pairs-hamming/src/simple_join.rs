@@ -1,6 +1,5 @@
 //! A naive implementation of similarity self-join on binary sketches in the Hamming space.
-use anyhow::{anyhow, Result};
-
+use crate::errors::{AllPairsHammingError, Result};
 use crate::sketch::Sketch;
 
 /// A naive implementation of similarity self-join on binary sketches in the Hamming space,
@@ -43,10 +42,11 @@ where
         let mut sketch = Vec::with_capacity(self.num_chunks());
         for _ in 0..self.num_chunks() {
             sketch.push(iter.next().ok_or_else(|| {
-                anyhow!(
+                let msg = format!(
                     "The input sketch must include {} chunks at least.",
                     self.num_chunks()
-                )
+                );
+                AllPairsHammingError::input(msg)
             })?)
         }
         self.sketches.push(sketch);
