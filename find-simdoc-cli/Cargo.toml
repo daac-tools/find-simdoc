@@ -10,8 +10,10 @@ all-pairs-hamming = { path = "../all-pairs-hamming" } # MIT or Apache-2.0
 clap = { version = "3.1", features = ["derive"] } # MIT or Apache-2.0
 find-simdoc = { path = "../find-simdoc" } # MIT or Apache-2.0
 hashbrown = "0.12.3" # MIT or Apache-2.0
+positioned-io = "0.3.0" # MIT
 rand = "0.8.5" # MIT or Apache-2.0
 rand_xoshiro = "0.6.0" # MIT or Apache-2.0
+rayon = "1.5.3" # MIT or Apache-2.0
 
 [[bin]]
 name = "jaccard"
