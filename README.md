@@ -35,8 +35,8 @@ on the basis of the ideas behind the locality sensitive hashing (LSH) and [sketc
 
 LSH allows tuning of performance in accuracy, time, and memory, through a manual parameter specifying search dimensions.
 You can flexibly perform searches depending on your dataset and machine environment.
-  - Specifying lower dimensions allows for faster and rougher searches for similar documents with less memory usage.
-  - Specifying higher dimensions allows for more accurate searches for similar documents with more memory usage.
+  - Specifying lower dimensions allows for faster and rougher searches with less memory usage.
+  - Specifying higher dimensions allows for more accurate searches with more memory usage.
 
 ### Pure Rust
 
