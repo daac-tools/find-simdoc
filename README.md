@@ -1,8 +1,8 @@
-# Finding all-pair similar documents
+# Finding all pairs of similar documents
 
 ![Build Status](https://github.com/legalforce-research/find-simdoc/actions/workflows/rust.yml/badge.svg)
 
-This software provides time- and memory-efficient all-pair similarity searches in documents.
+This software provides time- and memory-efficient all pairs similarity searches in documents.
 
 ## Problem definition
 
@@ -15,18 +15,32 @@ This software provides time- and memory-efficient all-pair similarity searches i
 
 ## Features
 
-- **Easy to use:** This software supports all essential steps of document similarity search,
+### Easy to use
+
+This software supports all essential steps of document similarity search,
 from feature extraction to output of similar pairs.
-Therefore, you can immediately try the fast all-pair similarity search using your document files.
-- **Flexible tokenization:** You can specify any delimiter when splitting words in tokenization for feature extraction.
+Therefore, you can immediately try the fast all pairs similarity search using your document files.
+
+### Flexible tokenization
+
+You can specify any delimiter when splitting words in tokenization for feature extraction.
 This can be useful in languages where multiple definitions of words exist, such as Japanese or Chinese.
-- **Time and memory efficiency:** The time and memory complexities are *linear* over the numbers of input documents and output results
+
+### Time and memory efficiency
+
+The time and memory complexities are *linear* over the numbers of input documents and output results
 on the basis of the ideas behind the locality sensitive hashing (LSH) and [sketch sorting approach](https://proceedings.mlr.press/v13/tabei10a.html).
-- **Flexible search performance:** LSH allows tuning of performance in accuracy, time, and memory, through a manual parameter specifying search dimensions.
+
+### Flexible search performance
+
+LSH allows tuning of performance in accuracy, time, and memory, through a manual parameter specifying search dimensions.
 You can flexibly perform searches depending on your dataset and machine environment.
-  - Specifying lower dimensions allows for faster and rougher searches for similar documents with less memory usage.
-  - Specifying higher dimensions allows for more accurate searches for similar documents with more memory usage.
-- **Pure Rust:** This software is implemented in Rust, achieving safe and fast performance.
+  - Specifying lower dimensions allows for faster and rougher searches with less memory usage.
+  - Specifying higher dimensions allows for more accurate searches with more memory usage.
+
+### Pure Rust
+
+This software is implemented in Rust, achieving safe and fast performance.
 
 ## Running example
 
@@ -66,7 +80,7 @@ To do this, the output lines are shuffled, and your file will not be the identic
 
 ### 2. Finding all pairs of similar documents
 
-The workspace `find-simdoc-cli` provides CLI tools for fast all-pair similarity searches in documents.
+The workspace `find-simdoc-cli` provides CLI tools for fast all pairs similarity searches in documents.
 The approach consists of three steps:
 
 1. Extract features from documents

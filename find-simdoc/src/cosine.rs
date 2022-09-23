@@ -1,4 +1,4 @@
-//! Searcher for all-pair similar documents in the Cosine space.
+//! Searcher for all pairs of similar documents in the Cosine space.
 use std::sync::Mutex;
 
 use crate::errors::{FindSimdocError, Result};
@@ -10,7 +10,7 @@ use all_pairs_hamming::chunked_join::ChunkedJoiner;
 use rand::{RngCore, SeedableRng};
 use rayon::prelude::*;
 
-/// Searcher for all-pair similar documents in the Cosine space.
+/// Searcher for all pairs of similar documents in the Cosine space.
 ///
 /// # Approach
 ///
