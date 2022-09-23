@@ -1,8 +1,8 @@
-# Finding all-pair similar documents
+# Finding all pairs of similar documents
 
 ![Build Status](https://github.com/legalforce-research/find-simdoc/actions/workflows/rust.yml/badge.svg)
 
-This software provides time- and memory-efficient all-pair similarity searches in documents.
+This software provides time- and memory-efficient all pairs similarity searches in documents.
 
 ## Problem definition
 
@@ -17,7 +17,7 @@ This software provides time- and memory-efficient all-pair similarity searches i
 
 - **Easy to use:** This software supports all essential steps of document similarity search,
 from feature extraction to output of similar pairs.
-Therefore, you can immediately try the fast all-pair similarity search using your document files.
+Therefore, you can immediately try the fast all pairs similarity search using your document files.
 - **Flexible tokenization:** You can specify any delimiter when splitting words in tokenization for feature extraction.
 This can be useful in languages where multiple definitions of words exist, such as Japanese or Chinese.
 - **Time and memory efficiency:** The time and memory complexities are *linear* over the numbers of input documents and output results
@@ -66,7 +66,7 @@ To do this, the output lines are shuffled, and your file will not be the identic
 
 ### 2. Finding all pairs of similar documents
 
-The workspace `find-simdoc-cli` provides CLI tools for fast all-pair similarity searches in documents.
+The workspace `find-simdoc-cli` provides CLI tools for fast all pairs similarity searches in documents.
 The approach consists of three steps:
 
 1. Extract features from documents

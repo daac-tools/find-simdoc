@@ -1,4 +1,4 @@
-//! Time- and memory-efficient all-pair similarity searches in documents.
+//! Time- and memory-efficient all pairs similarity searches in documents.
 //! A more detailed description can be found on the [project page](https://github.com/legalforce-research/find-simdoc).
 //!
 //! # Problem definition
@@ -14,7 +14,7 @@
 //!
 //! - **Easy to use:** This software supports all essential steps of document similarity search,
 //! from feature extraction to output of similar pairs.
-//! Therefore, you can immediately try the fast all-pair similarity search using your document files.
+//! Therefore, you can immediately try the fast all pairs similarity search using your document files.
 //! - **Flexible tokenization:** You can specify any delimiter when splitting words in tokenization for feature extraction.
 //! This can be useful in languages where multiple definitions of words exist, such as Japanese or Chinese.
 //! - **Time efficiency:** The time complexity is *linear* over the numbers of input documents and output results,
