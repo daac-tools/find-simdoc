@@ -12,15 +12,28 @@
 //!
 //! # Features
 //!
-//! - **Easy to use:** This software supports all essential steps of document similarity search,
+//! ## Easy to use
+//!
+//! This software supports all essential steps of document similarity search,
 //! from feature extraction to output of similar pairs.
 //! Therefore, you can immediately try the fast all pairs similarity search using your document files.
-//! - **Flexible tokenization:** You can specify any delimiter when splitting words in tokenization for feature extraction.
+//!
+//! ## Flexible tokenization
+//!
+//! You can specify any delimiter when splitting words in tokenization for feature extraction.
 //! This can be useful in languages where multiple definitions of words exist, such as Japanese or Chinese.
-//! - **Time efficiency:** The time complexity is *linear* over the numbers of input documents and output results,
-//! based on the idea of the [sketch sorting approach](https://proceedings.mlr.press/v13/tabei10a.html).
-//! - **Memory efficiency:** The memory complexity is *linear* over the numbers of input documents and output results,
-//! and the actual memory usage can be very low thanks to compact binary sketches by locality sensitive hashing.
+//!
+//! ## Time and memory efficiency
+//!
+//! The time and memory complexities are *linear* over the numbers of input documents and output results
+//! on the basis of the ideas behind the locality sensitive hashing (LSH) and [sketch sorting approach](https://proceedings.mlr.press/v13/tabei10a.html).
+//!
+//! ## Tunable search performance
+//!
+//! LSH allows tuning of performance in accuracy, time, and memory, through a manual parameter specifying search dimensions.
+//! You can flexibly perform searches depending on your dataset and machine environment.
+//!   - Specifying lower dimensions allows for faster and rougher searches with less memory usage.
+//!   - Specifying higher dimensions allows for more accurate searches with more memory usage.
 //!
 //! # Search steps
 //!
