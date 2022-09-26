@@ -33,7 +33,7 @@ This can be useful in languages where multiple definitions of words exist, such 
 The time and memory complexities are *linear* over the numbers of input documents and output results
 on the basis of the ideas behind the locality sensitive hashing (LSH) and [sketch sorting approach](https://proceedings.mlr.press/v13/tabei10a.html).
 
-### Flexible search performance
+### Tunable search performance
 
 LSH allows tuning of performance in accuracy, time, and memory, through a manual parameter specifying search dimensions.
 You can flexibly perform searches depending on your dataset and machine environment.
