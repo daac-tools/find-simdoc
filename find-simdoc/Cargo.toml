@@ -1,6 +1,6 @@
 [package]
 name = "find-simdoc"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ["Shunsuke Kanda <shnsk.knd@gmail.com>"]
 description = "Time- and memory-efficient all pairs similarity searches in documents."
