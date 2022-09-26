@@ -7,3 +7,7 @@ a combination of the [multiple sorting](https://doi.org/10.1007/s10115-009-0271-
 and the [multi-index approach](https://doi.org/10.1109/TKDE.2019.2899597).
 
 This library is a part of [find-simdoc](https://github.com/legalforce-research/find-simdoc).
+
+## API documentation
+
+https://docs.rs/all-pairs-hamming
