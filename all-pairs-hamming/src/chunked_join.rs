@@ -141,7 +141,7 @@ where
 
     /// Gets the number of stored sketches.
     pub fn num_sketches(&self) -> usize {
-        self.chunks.get(0).map(|v| v.len()).unwrap_or(0)
+        self.chunks.first().map(|v| v.len()).unwrap_or(0)
     }
 
     /// Gets the memory usage in bytes.
