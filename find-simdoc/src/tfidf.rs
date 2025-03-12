@@ -119,7 +119,7 @@ impl Tf {
         }
     }
 
-    fn count<T>(&self, terms: &mut [(T, f64)]) -> HashMap<T, usize>
+    fn count<T>(&self, terms: &[(T, f64)]) -> HashMap<T, usize>
     where
         T: Hash + Eq + Copy + Default,
     {
