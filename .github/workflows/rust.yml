@@ -17,8 +17,6 @@ jobs:
       matrix:
         rust:
           - stable
-          - beta
-          - nightly
     steps:
       - uses: actions/checkout@v2
       - name: Install latest stable
@@ -51,7 +49,7 @@ jobs:
         with:
           command: test
           args: --release --all-features
-          
+
       - name: Run cargo doc
         uses: actions-rs/cargo@v1
         continue-on-error: ${{ matrix.rust == 'nightly' }}

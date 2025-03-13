@@ -29,7 +29,7 @@ pub struct SimHashIter<'a> {
     weights: [f64; 64],
 }
 
-impl<'a> Iterator for SimHashIter<'a> {
+impl Iterator for SimHashIter<'_> {
     type Item = u64;
 
     fn next(&mut self) -> Option<Self::Item> {

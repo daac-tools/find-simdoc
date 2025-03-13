@@ -27,7 +27,7 @@ pub struct MinHashIter<'a> {
     seeder: rand_xoshiro::SplitMix64,
 }
 
-impl<'a> Iterator for MinHashIter<'a> {
+impl Iterator for MinHashIter<'_> {
     type Item = u64;
 
     fn next(&mut self) -> Option<Self::Item> {

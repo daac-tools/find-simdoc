@@ -1,6 +1,5 @@
 //! Traits of binary short sketches of primitive integer types.
 use std::ops::Range;
-use std::usize;
 
 use num_traits::int::PrimInt;
 use num_traits::{FromPrimitive, ToPrimitive};
