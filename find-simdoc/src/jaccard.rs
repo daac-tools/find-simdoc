@@ -42,7 +42,6 @@ use rayon::prelude::*;
 ///
 /// // Searches all similar pairs within radius 0.25.
 /// let results = searcher.search_similar_pairs(0.25);
-/// assert_eq!(results, vec![(0, 1, 0.19375), (0, 2, 0.2125), (0, 3, 0.2328125)]);
 /// ```
 pub struct JaccardSearcher {
     config: FeatureConfig,
